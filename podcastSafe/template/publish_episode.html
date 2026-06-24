@@ -1,138 +1,702 @@
 {% extends 'base.html' %}
-{% block title %}Publier un Épisode — The SafePlace by K{% endblock %}
+{% block title %}Publier un épisode — The SafePlace by K{% endblock %}
+
+{% block extra_css %}
+<style>
+:root {
+  --pb-bg: #040906;
+  --pb-accent: #9ff700;
+  --pb-card: rgba(12,22,14,.9);
+  --pb-border: rgba(159,247,0,.12);
+  --pb-muted: #4d7050;
+}
+body { background: var(--pb-bg); color: #e8f5e0; }
+
+.pub-wrap {
+  max-width: 720px;
+  margin: 0 auto;
+  padding: 32px 20px 80px;
+}
+
+.pub-header {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  margin-bottom: 28px;
+}
+.pub-header h1 {
+  font-size: 1.5rem;
+  font-weight: 900;
+  font-family: 'Montserrat', sans-serif;
+  color: var(--pb-accent);
+}
+.pub-header a {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 16px;
+  border-radius: 99px;
+  background: rgba(255,255,255,.06);
+  border: 1px solid rgba(255,255,255,.1);
+  color: #e8f5e0;
+  font-size: .8rem;
+  font-weight: 600;
+  text-decoration: none;
+  transition: background .2s;
+}
+.pub-header a:hover { background: rgba(255,255,255,.12); }
+
+/* ── TABS ── */
+.pub-tabs {
+  display: flex;
+  gap: 4px;
+  background: rgba(255,255,255,.04);
+  border: 1px solid var(--pb-border);
+  border-radius: 14px;
+  padding: 5px;
+  margin-bottom: 24px;
+}
+.pub-tab {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 12px 20px;
+  border-radius: 10px;
+  border: none;
+  background: transparent;
+  color: var(--pb-muted);
+  font-weight: 700;
+  font-size: .86rem;
+  cursor: pointer;
+  transition: all .2s;
+  font-family: inherit;
+}
+.pub-tab.active {
+  background: var(--pb-card);
+  color: var(--pb-accent);
+  border: 1px solid var(--pb-border);
+  box-shadow: 0 2px 12px rgba(0,0,0,.25);
+}
+.pub-tab:not(.active):hover { color: #e8f5e0; }
+
+/* ── CARD ── */
+.pub-card {
+  background: var(--pb-card);
+  border: 1px solid var(--pb-border);
+  border-radius: 20px;
+  padding: 28px;
+  backdrop-filter: blur(20px);
+}
+
+/* ── FORM FIELDS ── */
+.field { margin-bottom: 18px; }
+.field label {
+  display: block;
+  font-size: .73rem;
+  font-weight: 800;
+  color: var(--pb-muted);
+  text-transform: uppercase;
+  letter-spacing: .07em;
+  margin-bottom: 6px;
+}
+.field input,
+.field textarea,
+.field select {
+  width: 100%;
+  background: rgba(255,255,255,.04);
+  border: 1px solid rgba(255,255,255,.09);
+  border-radius: 12px;
+  padding: 12px 14px;
+  color: #e8f5e0;
+  font-size: .9rem;
+  outline: none;
+  font-family: inherit;
+  transition: border-color .2s;
+  box-sizing: border-box;
+}
+.field input:focus,
+.field textarea:focus,
+.field select:focus {
+  border-color: var(--pb-accent);
+  box-shadow: 0 0 0 3px rgba(159,247,0,.08);
+}
+.field textarea { resize: vertical; min-height: 90px; }
+.field select option { background: #0a160c; }
+.field .hint { font-size: .71rem; color: var(--pb-muted); margin-top: 4px; }
+.field-row { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+@media(max-width:540px) { .field-row { grid-template-columns: 1fr; } }
+
+/* Episode type selector */
+.type-sel { display: flex; gap: 8px; }
+.type-opt {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  padding: 14px 10px;
+  border-radius: 12px;
+  border: 1.5px solid rgba(255,255,255,.08);
+  background: rgba(255,255,255,.03);
+  cursor: pointer;
+  transition: all .2s;
+  font-size: .8rem;
+  font-weight: 700;
+  color: var(--pb-muted);
+}
+.type-opt.active { border-color: rgba(159,247,0,.4); background: rgba(159,247,0,.07); color: var(--pb-accent); }
+.type-opt .ms { font-size: 28px; }
+
+/* Color picker row */
+.color-row { display: flex; gap: 8px; flex-wrap: wrap; }
+.color-dot {
+  width: 30px; height: 30px;
+  border-radius: 50%;
+  cursor: pointer;
+  border: 2px solid transparent;
+  transition: transform .15s, border-color .15s;
+}
+.color-dot.active { border-color: #fff; transform: scale(1.2); }
+
+/* ── DROP ZONE ── */
+.drop-zone {
+  border: 2px dashed rgba(159,247,0,.2);
+  border-radius: 16px;
+  padding: 48px 24px;
+  text-align: center;
+  cursor: pointer;
+  transition: all .25s;
+  background: rgba(159,247,0,.02);
+  margin-bottom: 24px;
+}
+.drop-zone:hover, .drop-zone.drag-over {
+  border-color: var(--pb-accent);
+  background: rgba(159,247,0,.06);
+}
+.drop-zone .ms { font-size: 52px; color: rgba(159,247,0,.4); display: block; margin-bottom: 12px; }
+.drop-zone p { color: var(--pb-muted); font-size: .9rem; margin: 6px 0; }
+.drop-zone p.sub { font-size: .75rem; }
+
+/* ── FILE INFO ── */
+.file-info-bar {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 16px;
+  background: rgba(159,247,0,.07);
+  border: 1px solid rgba(159,247,0,.2);
+  border-radius: 12px;
+  margin-bottom: 20px;
+}
+.file-info-bar .ms { color: var(--pb-accent); font-size: 22px; }
+.file-info-bar .fname { font-weight: 700; font-size: .88rem; color: #e8f5e0; }
+.file-info-bar .fsize { font-size: .76rem; color: var(--pb-muted); }
+.file-info-bar .fchange { margin-left: auto; font-size: .76rem; color: var(--pb-accent); cursor: pointer; text-decoration: underline; }
+
+/* ── PROGRESS ── */
+.progress-wrap {
+  background: rgba(255,255,255,.07);
+  border-radius: 99px;
+  height: 6px;
+  overflow: hidden;
+  margin: 20px 0 8px;
+  display: none;
+}
+.progress-fill {
+  height: 100%;
+  background: linear-gradient(90deg, var(--pb-accent), #6ec200);
+  border-radius: 99px;
+  width: 0%;
+  transition: width .3s ease;
+}
+.progress-pct {
+  font-size: .78rem;
+  color: var(--pb-muted);
+  margin-bottom: 18px;
+  display: none;
+  text-align: center;
+}
+
+/* ── BUTTONS ── */
+.btn-primary {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 14px 32px;
+  border-radius: 99px;
+  border: none;
+  background: var(--pb-accent);
+  color: #002210;
+  font-weight: 800;
+  font-size: .95rem;
+  cursor: pointer;
+  transition: all .2s;
+  font-family: inherit;
+  width: 100%;
+  justify-content: center;
+  box-shadow: 0 0 28px rgba(159,247,0,.2);
+}
+.btn-primary:hover { transform: translateY(-1px); box-shadow: 0 0 40px rgba(159,247,0,.35); }
+.btn-primary:disabled { opacity: .4; pointer-events: none; cursor: default; }
+.btn-primary .ms { font-size: 20px; }
+
+/* ── ALERT ── */
+.pub-alert {
+  padding: 12px 16px;
+  border-radius: 12px;
+  font-size: .85rem;
+  font-weight: 600;
+  margin-bottom: 18px;
+  display: none;
+}
+.pub-alert.error { background: rgba(255,68,85,.1); border: 1px solid rgba(255,68,85,.25); color: #ff4455; }
+.pub-alert.success { background: rgba(159,247,0,.08); border: 1px solid rgba(159,247,0,.22); color: var(--pb-accent); }
+
+/* ── RESULT CARD ── */
+.result-card {
+  background: rgba(159,247,0,.06);
+  border: 1px solid rgba(159,247,0,.2);
+  border-radius: 16px;
+  padding: 20px;
+  text-align: center;
+  display: none;
+}
+.result-card .check { font-size: 52px; color: var(--pb-accent); display: block; font-variation-settings:'FILL' 1; }
+.result-card h3 { font-size: 1.05rem; font-weight: 800; margin: 10px 0 4px; }
+.result-card .ep-title { font-size: .9rem; color: var(--pb-muted); margin-bottom: 16px; }
+.result-card .result-actions { display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; }
+.result-actions a, .result-actions button {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 10px 20px;
+  border-radius: 99px;
+  font-weight: 700;
+  font-size: .82rem;
+  text-decoration: none;
+  cursor: pointer;
+  border: none;
+  font-family: inherit;
+}
+.result-btn-primary { background: var(--pb-accent); color: #002210; }
+.result-btn-ghost { background: rgba(255,255,255,.08); color: #e8f5e0; border: 1px solid rgba(255,255,255,.12)!important; }
+</style>
+{% endblock %}
+
 {% block content %}
-<div class="flex min-h-screen">
+<div class="pub-wrap">
 
-  <!-- Sidebar Studio -->
-  <aside class="bg-surface-container-low w-64 hidden lg:flex flex-col h-screen p-6 gap-4 sticky top-0 shrink-0">
-    <div class="mb-8">
-      <h1 class="font-headline-md font-bold text-primary">Creator Studio</h1>
-      <p class="font-label-md text-on-surface-variant text-sm">Publier un nouveau contenu</p>
-    </div>
-    <nav class="flex-1 flex flex-col gap-2">
-      <a href="{% url 'dashboard' %}" class="flex items-center gap-3 px-4 py-3 text-on-surface-variant hover:bg-surface-container-high rounded-lg transition-all cursor-pointer">
-        <span class="material-symbols-outlined">leaderboard</span>
-        <span class="font-label-md">Analytique</span>
-      </a>
-      <a href="{% url 'publish_episode' %}" class="flex items-center gap-3 px-4 py-3 bg-secondary-container text-on-secondary-container rounded-lg font-bold transition-all cursor-pointer">
-        <span class="material-symbols-outlined" style="font-variation-settings:'FILL' 1">video_library</span>
-        <span class="font-label-md">Publier</span>
-      </a>
-      <a href="{% url 'manage_live_streams' %}" class="flex items-center gap-3 px-4 py-3 text-on-surface-variant hover:bg-surface-container-high rounded-lg transition-all cursor-pointer">
-        <span class="material-symbols-outlined">sensors</span>
-        <span class="font-label-md">Live Studio</span>
-      </a>
-      <a href="{% url 'subscriptions' %}" class="flex items-center gap-3 px-4 py-3 text-on-surface-variant hover:bg-surface-container-high rounded-lg transition-all cursor-pointer">
-        <span class="material-symbols-outlined">payments</span>
-        <span class="font-label-md">Dons & Abonnements</span>
-      </a>
-    </nav>
-  </aside>
+  <!-- Header -->
+  <div class="pub-header">
+    <a href="{% url 'studio_live' %}">
+      <span class="material-symbols-outlined" style="font-size:16px">arrow_back</span>Studio
+    </a>
+    <h1>Publier un épisode</h1>
+  </div>
 
-  <!-- Main Content -->
-  <main class="flex-1 overflow-y-auto bg-background min-w-0">
-    <div class="max-w-4xl mx-auto px-4 md:px-margin-desktop py-10">
-      
-      <div class="mb-10">
-        <h1 class="font-display-lg text-primary text-3xl md:text-5xl mb-3">Publier un nouvel épisode</h1>
-        <p class="text-on-surface-variant text-body-lg">Créez et publiez votre contenu podcast ou vidéo.</p>
-      </div>
+  <!-- Tabs -->
+  <div class="pub-tabs">
+    <button class="pub-tab active" id="tab-btn-url" onclick="switchTab('url')">
+      <span class="material-symbols-outlined" style="font-size:18px">link</span>
+      Publier par URL
+    </button>
+    <button class="pub-tab" id="tab-btn-import" onclick="switchTab('import')">
+      <span class="material-symbols-outlined" style="font-size:18px">upload_file</span>
+      Importer depuis la galerie
+    </button>
+  </div>
 
+  <!-- ── TAB URL ── -->
+  <div id="pane-url">
+    <div class="pub-card">
       {% if error %}
-      <div class="bg-error-container text-on-error-container p-4 rounded-lg mb-6 border border-error">
-        <p class="font-bold">{{ error }}</p>
-      </div>
+      <div class="pub-alert error" style="display:block">{{ error }}</div>
       {% endif %}
 
-      <div class="bg-surface-container-lowest p-8 rounded-[24px] border border-outline-variant shadow-[0px_4px_20px_rgba(11,61,46,0.05)]">
-        
-        <form method="POST" class="space-y-6">
-          {% csrf_token %}
-          
-          <!-- Type d'épisode -->
-          <div>
-            <label class="block font-label-md text-on-surface mb-3 text-sm">Type de contenu *</label>
-            <div class="grid grid-cols-2 gap-4">
-              <label class="flex items-center p-4 border-2 border-outline rounded-xl cursor-pointer hover:bg-surface-container-low transition-all" onclick="document.querySelector('input[name=episode_type][value=podcast]').click()">
-                <input type="radio" name="episode_type" value="podcast" checked class="mr-3">
-                <span class="font-label-md">[MIC] Podcast</span>
-              </label>
-              <label class="flex items-center p-4 border-2 border-outline rounded-xl cursor-pointer hover:bg-surface-container-low transition-all" onclick="document.querySelector('input[name=episode_type][value=video]').click()">
-                <input type="radio" name="episode_type" value="video" class="mr-3">
-                <span class="font-label-md">[VIDEO] Vidéo</span>
-              </label>
+      <form method="POST" action="{% url 'publish_episode' %}">
+        {% csrf_token %}
+
+        <!-- Type -->
+        <div class="field">
+          <label>Type d'épisode</label>
+          <div class="type-sel">
+            <div class="type-opt active" id="type-podcast" onclick="setType('podcast')">
+              <span class="material-symbols-outlined ms" style="font-variation-settings:'FILL' 1">headphones</span>
+              Podcast
+            </div>
+            <div class="type-opt" id="type-video" onclick="setType('video')">
+              <span class="material-symbols-outlined ms" style="font-variation-settings:'FILL' 1">play_circle</span>
+              Vidéo
             </div>
           </div>
+          <input type="hidden" name="episode_type" id="inp-type" value="podcast">
+        </div>
 
-          <!-- Titre -->
-          <div>
-            <label class="block font-label-md text-on-surface mb-2 text-sm">Titre *</label>
-            <input type="text" name="title" required placeholder="Titre de votre épisode"
-                   class="w-full px-4 py-3 border border-outline-variant rounded-xl focus:ring-2 focus:ring-secondary/30 outline-none bg-surface-container-low font-body-md"/>
-          </div>
+        <!-- Titre -->
+        <div class="field">
+          <label>Titre *</label>
+          <input type="text" name="title" placeholder="Ex : Épisode 12 — La foi en action" required value="{{ request.POST.title|default:'' }}">
+        </div>
 
-          <!-- Description -->
-          <div>
-            <label class="block font-label-md text-on-surface mb-2 text-sm">Description *</label>
-            <textarea name="description" required rows="5" placeholder="Décrivez votre épisode..."
-                      class="w-full px-4 py-3 border border-outline-variant rounded-xl focus:ring-2 focus:ring-secondary/30 outline-none bg-surface-container-low font-body-md"></textarea>
-          </div>
+        <!-- Description -->
+        <div class="field">
+          <label>Description *</label>
+          <textarea name="description" placeholder="Résumez cet épisode en quelques phrases…" required>{{ request.POST.description|default:'' }}</textarea>
+        </div>
 
+        <!-- URL audio / vidéo -->
+        <div class="field" id="audio-url-field">
+          <label>URL Audio *</label>
+          <input type="url" name="audio_url" placeholder="https://fichier.mp3 ou lien SoundCloud…" value="{{ request.POST.audio_url|default:'' }}">
+          <p class="hint">Lien direct MP3 ou hébergeur audio (SoundCloud, Anchor, etc.)</p>
+        </div>
+        <div class="field" id="video-url-field" style="display:none">
+          <label>URL Vidéo *</label>
+          <input type="url" name="video_url" placeholder="https://youtube.com/watch?v=… ou lien direct MP4" value="{{ request.POST.video_url|default:'' }}">
+          <p class="hint">YouTube, lien direct MP4, etc.</p>
+        </div>
+
+        <div class="field-row">
           <!-- Catégorie -->
-          <div>
-            <label class="block font-label-md text-on-surface mb-2 text-sm">Catégorie</label>
-            <select name="category" class="w-full px-4 py-3 border border-outline-variant rounded-xl focus:ring-2 focus:ring-secondary/30 outline-none bg-surface-container-low font-body-md">
-              <option value="">-- Sélectionner une catégorie --</option>
-              {% for category in categories %}
-              <option value="{{ category.id }}">{{ category.name }}</option>
+          <div class="field">
+            <label>Catégorie</label>
+            <select name="category">
+              <option value="">— Aucune —</option>
+              {% for cat in categories %}
+              <option value="{{ cat.id }}" {% if request.POST.category == cat.id|stringformat:"s" %}selected{% endif %}>{{ cat.name }}</option>
               {% endfor %}
             </select>
           </div>
-
-          <!-- URLs de contenu -->
-          <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div>
-              <label class="block font-label-md text-on-surface mb-2 text-sm">URL Audio</label>
-              <input type="url" name="audio_url" placeholder="https://..."
-                     class="w-full px-4 py-3 border border-outline-variant rounded-xl focus:ring-2 focus:ring-secondary/30 outline-none bg-surface-container-low font-body-md"/>
-            </div>
-            <div>
-              <label class="block font-label-md text-on-surface mb-2 text-sm">URL Vidéo</label>
-              <input type="url" name="video_url" placeholder="https://..."
-                     class="w-full px-4 py-3 border border-outline-variant rounded-xl focus:ring-2 focus:ring-secondary/30 outline-none bg-surface-container-low font-body-md"/>
-            </div>
-          </div>
-
           <!-- Durée -->
+          <div class="field">
+            <label>Durée</label>
+            <input type="text" name="duration" placeholder="42:30" value="{{ request.POST.duration|default:'' }}">
+            <p class="hint">Format mm:ss ou hh:mm:ss</p>
+          </div>
+        </div>
+
+        <!-- Couleur -->
+        <div class="field">
+          <label>Couleur de la vignette</label>
+          <div class="color-row" id="color-row">
+            <div class="color-dot active" style="background:#00261b" data-color="#00261b" onclick="pickColor(this)"></div>
+            <div class="color-dot" style="background:#416900" data-color="#416900" onclick="pickColor(this)"></div>
+            <div class="color-dot" style="background:#1a3a5c" data-color="#1a3a5c" onclick="pickColor(this)"></div>
+            <div class="color-dot" style="background:#6b21a8" data-color="#6b21a8" onclick="pickColor(this)"></div>
+            <div class="color-dot" style="background:#b91c1c" data-color="#b91c1c" onclick="pickColor(this)"></div>
+            <div class="color-dot" style="background:#b45309" data-color="#b45309" onclick="pickColor(this)"></div>
+            <div class="color-dot" style="background:#0f766e" data-color="#0f766e" onclick="pickColor(this)"></div>
+          </div>
+          <input type="hidden" name="cover_color" id="inp-color" value="#00261b">
+        </div>
+
+        <button type="submit" class="btn-primary">
+          <span class="material-symbols-outlined ms">publish</span>
+          Publier l'épisode
+        </button>
+      </form>
+    </div>
+  </div>
+
+  <!-- ── TAB IMPORT ── -->
+  <div id="pane-import" style="display:none">
+    <div class="pub-card">
+
+      <!-- Alert -->
+      <div class="pub-alert" id="import-alert"></div>
+
+      <!-- Drop zone (affiché tant qu'aucun fichier sélectionné) -->
+      <div class="drop-zone" id="drop-zone">
+        <span class="material-symbols-outlined ms">audio_file</span>
+        <p><strong>Glissez votre fichier audio ici</strong></p>
+        <p>ou</p>
+        <label style="cursor:pointer;display:inline-flex;align-items:center;gap:7px;padding:10px 22px;border-radius:99px;background:var(--pb-accent);color:#002210;font-weight:800;font-size:.85rem;margin:6px 0">
+          <span class="material-symbols-outlined" style="font-size:18px">folder_open</span>
+          Choisir depuis la galerie
+          <input type="file" id="audio-input" accept=".mp3,.m4a,.wav,.ogg,.aac,.flac,audio/*" style="display:none">
+        </label>
+        <p class="sub">MP3 · M4A · WAV · OGG · AAC · FLAC &nbsp;|&nbsp; Max 300 Mo</p>
+      </div>
+
+      <!-- Formulaire (affiché après sélection du fichier) -->
+      <div id="import-form" style="display:none">
+
+        <!-- Info fichier -->
+        <div class="file-info-bar">
+          <span class="material-symbols-outlined" style="font-variation-settings:'FILL' 1">audio_file</span>
           <div>
-            <label class="block font-label-md text-on-surface mb-2 text-sm">Durée (ex: 45:30)</label>
-            <input type="text" name="duration" placeholder="MM:SS"
-                   class="w-full px-4 py-3 border border-outline-variant rounded-xl focus:ring-2 focus:ring-secondary/30 outline-none bg-surface-container-low font-body-md"/>
+            <div class="fname" id="fi-name"></div>
+            <div class="fsize" id="fi-size"></div>
           </div>
+          <span class="fchange" onclick="resetFile()">Changer</span>
+        </div>
 
-          <!-- Couleur de couverture -->
-          <div>
-            <label class="block font-label-md text-on-surface mb-2 text-sm">Couleur de couverture</label>
-            <input type="color" name="cover_color" value="#00261b"
-                   class="w-20 h-10 border border-outline-variant rounded-xl cursor-pointer"/>
+        <!-- Titre -->
+        <div class="field">
+          <label>Titre *</label>
+          <input type="text" id="imp-title" placeholder="Ex : Épisode 12 — La foi en action" required>
+        </div>
+
+        <!-- Description -->
+        <div class="field">
+          <label>Description</label>
+          <textarea id="imp-desc" placeholder="Résumez cet épisode…"></textarea>
+        </div>
+
+        <div class="field-row">
+          <!-- Catégorie -->
+          <div class="field">
+            <label>Catégorie</label>
+            <select id="imp-cat">
+              <option value="">— Aucune —</option>
+              {% for cat in categories %}
+              <option value="{{ cat.id }}">{{ cat.name }}</option>
+              {% endfor %}
+            </select>
           </div>
-
-          <!-- Actions -->
-          <div class="flex gap-4 pt-6 border-t border-outline-variant/30">
-            <button type="submit" class="flex-1 bg-primary text-on-primary font-bold px-6 py-4 rounded-xl hover:opacity-90 active:scale-95 transition-all">
-              <span class="material-symbols-outlined inline mr-2" style="font-variation-settings:'FILL' 1">check_circle</span>
-              Publier l'épisode
-            </button>
-            <a href="{% url 'dashboard' %}" class="flex-1 bg-surface-container-low text-on-surface font-bold px-6 py-4 rounded-xl hover:bg-surface-container-high transition-all text-center">
-              Annuler
-            </a>
+          <!-- Animateur -->
+          <div class="field">
+            <label>Animateur</label>
+            <input type="text" id="imp-host" placeholder="The SafePlace by K" value="The SafePlace by K">
           </div>
-        </form>
+        </div>
 
+        <!-- Durée -->
+        <div class="field">
+          <label>Durée (optionnelle)</label>
+          <input type="text" id="imp-duration" placeholder="42:30">
+          <p class="hint">Laissez vide si vous ne connaissez pas</p>
+        </div>
+
+        <!-- Progress -->
+        <div class="progress-wrap" id="progress-wrap">
+          <div class="progress-fill" id="progress-fill"></div>
+        </div>
+        <div class="progress-pct" id="progress-pct">0%</div>
+
+        <!-- Submit -->
+        <button class="btn-primary" id="import-btn" onclick="doImport()">
+          <span class="material-symbols-outlined ms">cloud_upload</span>
+          Importer le podcast
+        </button>
+      </div>
+
+      <!-- Résultat -->
+      <div class="result-card" id="result-card">
+        <span class="material-symbols-outlined check">check_circle</span>
+        <h3>Podcast importé avec succès !</h3>
+        <p class="ep-title" id="result-title"></p>
+        <div class="result-actions">
+          <a href="#" id="result-link" class="result-btn-primary">
+            <span class="material-symbols-outlined" style="font-size:16px">headphones</span>
+            Écouter l'épisode
+          </a>
+          <button onclick="resetAll()" class="result-btn-ghost">
+            <span class="material-symbols-outlined" style="font-size:16px">add</span>
+            Importer un autre
+          </button>
+          <a href="{% url 'podcasts' %}" class="result-btn-ghost">
+            <span class="material-symbols-outlined" style="font-size:16px">library_music</span>
+            Voir tous les podcasts
+          </a>
+        </div>
       </div>
 
     </div>
-  </main>
+  </div>
 
 </div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+/* ── Tabs ── */
+function switchTab(t) {
+  document.getElementById('pane-url').style.display    = t === 'url'    ? '' : 'none';
+  document.getElementById('pane-import').style.display = t === 'import' ? '' : 'none';
+  document.getElementById('tab-btn-url').className    = 'pub-tab' + (t === 'url'    ? ' active' : '');
+  document.getElementById('tab-btn-import').className = 'pub-tab' + (t === 'import' ? ' active' : '');
+}
+
+/* ── Type selector (URL tab) ── */
+function setType(t) {
+  document.getElementById('inp-type').value = t;
+  document.getElementById('type-podcast').classList.toggle('active', t === 'podcast');
+  document.getElementById('type-video').classList.toggle('active', t === 'video');
+  document.getElementById('audio-url-field').style.display = t === 'podcast' ? '' : 'none';
+  document.getElementById('video-url-field').style.display = t === 'video'   ? '' : 'none';
+}
+
+/* ── Color picker (URL tab) ── */
+function pickColor(el) {
+  document.querySelectorAll('.color-dot').forEach(d => d.classList.remove('active'));
+  el.classList.add('active');
+  document.getElementById('inp-color').value = el.dataset.color;
+}
+
+/* ── File selection (Import tab) ── */
+var selectedFile = null;
+
+document.getElementById('audio-input').addEventListener('change', function() {
+  if (this.files.length) handleFile(this.files[0]);
+});
+
+var dz = document.getElementById('drop-zone');
+dz.addEventListener('dragover',  function(e){ e.preventDefault(); dz.classList.add('drag-over'); });
+dz.addEventListener('dragleave', function(){ dz.classList.remove('drag-over'); });
+dz.addEventListener('drop', function(e){
+  e.preventDefault();
+  dz.classList.remove('drag-over');
+  if (e.dataTransfer.files.length) handleFile(e.dataTransfer.files[0]);
+});
+
+function fmtSize(b) {
+  if (b < 1024 * 1024) return (b / 1024).toFixed(1) + ' Ko';
+  return (b / (1024 * 1024)).toFixed(1) + ' Mo';
+}
+
+function handleFile(file) {
+  var allowed = ['audio/mpeg','audio/mp3','audio/mp4','audio/x-m4a','audio/wav','audio/x-wav','audio/ogg','audio/aac','audio/flac','audio/x-flac'];
+  var ext = file.name.split('.').pop().toLowerCase();
+  var okExt = ['mp3','m4a','wav','ogg','aac','flac'].indexOf(ext) >= 0;
+  var okType = allowed.indexOf(file.type) >= 0;
+
+  if (!okExt && !okType) {
+    showAlert('Format non supporté. Utilisez MP3, M4A, WAV, OGG, AAC ou FLAC.', 'error');
+    return;
+  }
+  if (file.size > 300 * 1024 * 1024) {
+    showAlert('Fichier trop volumineux (max 300 Mo).', 'error');
+    return;
+  }
+
+  selectedFile = file;
+
+  document.getElementById('fi-name').textContent = file.name;
+  document.getElementById('fi-size').textContent = fmtSize(file.size);
+
+  // Pré-remplir le titre depuis le nom du fichier
+  var baseName = file.name.replace(/\.[^.]+$/, '').replace(/[-_]/g, ' ');
+  var titleInp = document.getElementById('imp-title');
+  if (!titleInp.value) titleInp.value = baseName.charAt(0).toUpperCase() + baseName.slice(1);
+
+  document.getElementById('drop-zone').style.display   = 'none';
+  document.getElementById('import-form').style.display = '';
+  document.getElementById('result-card').style.display  = 'none';
+  hideAlert();
+}
+
+function resetFile() {
+  selectedFile = null;
+  document.getElementById('audio-input').value = '';
+  document.getElementById('drop-zone').style.display   = '';
+  document.getElementById('import-form').style.display = 'none';
+  document.getElementById('result-card').style.display  = 'none';
+  resetProgress();
+}
+
+function resetAll() {
+  resetFile();
+  document.getElementById('imp-title').value    = '';
+  document.getElementById('imp-desc').value     = '';
+  document.getElementById('imp-cat').value      = '';
+  document.getElementById('imp-host').value     = 'The SafePlace by K';
+  document.getElementById('imp-duration').value = '';
+  hideAlert();
+}
+
+/* ── Import upload ── */
+function doImport() {
+  if (!selectedFile) { showAlert('Veuillez sélectionner un fichier.', 'error'); return; }
+  var title = document.getElementById('imp-title').value.trim();
+  if (!title) { showAlert('Le titre est obligatoire.', 'error'); document.getElementById('imp-title').focus(); return; }
+
+  var btn = document.getElementById('import-btn');
+  btn.disabled = true;
+  btn.innerHTML = '<span class="material-symbols-outlined ms" style="animation:spin 1s linear infinite">progress_activity</span>Envoi en cours…';
+
+  var fd = new FormData();
+  fd.append('audio_file',  selectedFile);
+  fd.append('title',       title);
+  fd.append('description', document.getElementById('imp-desc').value.trim() || title);
+  fd.append('category',    document.getElementById('imp-cat').value);
+  fd.append('host',        document.getElementById('imp-host').value.trim() || 'The SafePlace by K');
+  fd.append('duration',    document.getElementById('imp-duration').value.trim());
+
+  // CSRF
+  var csrf = (document.cookie.match(/csrftoken=([^;]+)/) || [])[1] || '';
+  fd.append('csrfmiddlewaretoken', csrf);
+
+  var pw = document.getElementById('progress-wrap');
+  var pf = document.getElementById('progress-fill');
+  var pp = document.getElementById('progress-pct');
+  pw.style.display = 'block';
+  pp.style.display = 'block';
+
+  var xhr = new XMLHttpRequest();
+  xhr.upload.onprogress = function(e) {
+    if (e.lengthComputable) {
+      var pct = Math.round(e.loaded / e.total * 100);
+      pf.style.width = pct + '%';
+      pp.textContent = pct + '%';
+    }
+  };
+  xhr.onload = function() {
+    btn.disabled = false;
+    btn.innerHTML = '<span class="material-symbols-outlined ms">cloud_upload</span>Importer le podcast';
+    pw.style.display = 'none';
+    pp.style.display = 'none';
+
+    if (xhr.status === 201) {
+      var data = JSON.parse(xhr.responseText);
+      var ep = data.episode;
+      document.getElementById('result-title').textContent = ep.title;
+      document.getElementById('result-link').href = ep.detail_url;
+      document.getElementById('import-form').style.display = 'none';
+      document.getElementById('result-card').style.display  = '';
+    } else {
+      var msg = 'Erreur lors de l\'import.';
+      try { msg = JSON.parse(xhr.responseText).error || msg; } catch(e) {}
+      showAlert(msg, 'error');
+      resetProgress();
+    }
+  };
+  xhr.onerror = function() {
+    btn.disabled = false;
+    btn.innerHTML = '<span class="material-symbols-outlined ms">cloud_upload</span>Importer le podcast';
+    pw.style.display = 'none';
+    pp.style.display = 'none';
+    showAlert('Erreur réseau. Vérifiez votre connexion.', 'error');
+    resetProgress();
+  };
+
+  xhr.open('POST', '{% url "import_podcast" %}');
+  xhr.send(fd);
+}
+
+function resetProgress() {
+  document.getElementById('progress-fill').style.width = '0%';
+  document.getElementById('progress-pct').textContent  = '0%';
+}
+
+function showAlert(msg, type) {
+  var el = document.getElementById('import-alert');
+  el.textContent = msg;
+  el.className = 'pub-alert ' + type;
+  el.style.display = 'block';
+}
+function hideAlert() {
+  document.getElementById('import-alert').style.display = 'none';
+}
+
+/* Spinner animation */
+var style = document.createElement('style');
+style.textContent = '@keyframes spin{to{transform:rotate(360deg)}}';
+document.head.appendChild(style);
+
+/* ── Pré-sélection onglet depuis URL hash ── */
+if (location.hash === '#import') switchTab('import');
+</script>
 {% endblock %}

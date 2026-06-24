@@ -1,0 +1,915 @@
+{% extends 'base.html' %}
+{% block title %}Studio Live — The SafePlace by K{% endblock %}
+
+{% block extra_css %}
+<style>
+:root {
+  --studio-bg: #040906;
+  --accent: #9ff700;
+  --accent-dim: rgba(159,247,0,.1);
+  --card: rgba(12,22,14,.85);
+  --border: rgba(159,247,0,.1);
+  --muted: #4d7050;
+}
+
+body { background: var(--studio-bg); color: #e8f5e0; font-family: 'Inter', 'Poppins', sans-serif; }
+
+.studio-wrap {
+  display: grid;
+  grid-template-columns: 1fr 340px;
+  grid-template-rows: auto 1fr;
+  gap: 18px;
+  max-width: 1400px;
+  margin: 0 auto;
+  padding: 20px;
+  min-height: calc(100vh - 64px);
+}
+
+/* ── HEADER ── */
+.studio-header {
+  grid-column: 1 / -1;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px 20px;
+  background: var(--card);
+  border-radius: 16px;
+  border: 1px solid var(--border);
+  backdrop-filter: blur(20px);
+}
+.studio-brand { display: flex; align-items: center; gap: 12px; }
+.studio-brand .dot-live {
+  width: 10px; height: 10px;
+  border-radius: 50%;
+  background: #ff4455;
+  box-shadow: 0 0 12px rgba(255,68,85,.8);
+  position: relative;
+  display: none;
+}
+.studio-brand .dot-live.on { display: block; }
+.studio-brand .dot-live::after {
+  content: '';
+  position: absolute;
+  inset: -5px;
+  border-radius: 50%;
+  background: rgba(255,68,85,.3);
+  animation: dotRing 1.4s ease-out infinite;
+}
+@keyframes dotRing { 0%{transform:scale(1);opacity:.8} 100%{transform:scale(3);opacity:0} }
+.studio-brand h1 { font-size: 1.1rem; font-weight: 800; font-family: 'Montserrat', sans-serif; }
+.studio-brand .status-text { font-size: .78rem; color: var(--muted); }
+.studio-timer { font-family: 'Montserrat', monospace; font-size: 1.3rem; font-weight: 900; color: var(--accent); letter-spacing: .05em; display: none; }
+.studio-timer.on { display: block; }
+
+/* ── MAIN VIDEO ── */
+.studio-main {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+.preview-wrap {
+  position: relative;
+  background: #000;
+  border-radius: 18px;
+  overflow: hidden;
+  aspect-ratio: 16/9;
+  border: 1px solid var(--border);
+}
+#preview-video {
+  width: 100%; height: 100%;
+  object-fit: cover;
+  transform: scaleX(-1);
+}
+.preview-overlay {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  background: rgba(0,0,0,.7);
+}
+.preview-overlay.hidden { display: none; }
+.preview-overlay .ms { font-size: 56px; color: rgba(255,255,255,.15); }
+.preview-overlay p { color: rgba(255,255,255,.4); font-size: .85rem; }
+
+/* Stream quality bar */
+.quality-bar {
+  position: absolute;
+  bottom: 12px;
+  left: 12px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background: rgba(0,0,0,.6);
+  backdrop-filter: blur(10px);
+  padding: 5px 12px;
+  border-radius: 99px;
+  font-size: .72rem;
+  font-weight: 700;
+  border: 1px solid rgba(255,255,255,.08);
+}
+.quality-bars { display: flex; gap: 2px; align-items: flex-end; }
+.quality-bars span {
+  display: block;
+  width: 4px;
+  border-radius: 2px;
+  background: var(--accent);
+}
+
+/* Controls bar */
+.controls-bar {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+.ctrl-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  padding: 10px 18px;
+  border-radius: 99px;
+  border: none;
+  font-weight: 700;
+  font-size: .84rem;
+  cursor: pointer;
+  transition: all .2s;
+  font-family: inherit;
+}
+.ctrl-btn-ghost { background: rgba(255,255,255,.07); color: #e8f5e0; border: 1px solid rgba(255,255,255,.1); }
+.ctrl-btn-ghost:hover { background: rgba(255,255,255,.13); }
+.ctrl-btn-accent { background: var(--accent); color: #002210; box-shadow: 0 0 24px rgba(159,247,0,.3); }
+.ctrl-btn-accent:hover { transform: translateY(-1px); box-shadow: 0 0 36px rgba(159,247,0,.45); }
+.ctrl-btn-danger { background: rgba(255,68,85,.15); color: #ff4455; border: 1px solid rgba(255,68,85,.25); }
+.ctrl-btn-danger:hover { background: rgba(255,68,85,.28); }
+.ctrl-btn:disabled { opacity: .4; pointer-events: none; }
+
+.go-live-btn {
+  margin-left: auto;
+  padding: 12px 32px;
+  font-size: 1rem;
+  letter-spacing: .03em;
+}
+
+/* Platform status pills */
+.platforms-row { display: flex; gap: 8px; flex-wrap: wrap; }
+.platform-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  padding: 7px 14px;
+  border-radius: 99px;
+  font-size: .76rem;
+  font-weight: 700;
+  background: rgba(255,255,255,.05);
+  border: 1px solid rgba(255,255,255,.1);
+  color: var(--muted);
+  transition: all .25s;
+}
+.platform-pill.configured { color: #e8f5e0; border-color: rgba(255,255,255,.18); }
+.platform-pill.live-on { background: rgba(159,247,0,.1); border-color: rgba(159,247,0,.3); color: var(--accent); }
+.platform-pill .pdot { width: 7px; height: 7px; border-radius: 50%; background: currentColor; position: relative; }
+.platform-pill.live-on .pdot::after { content:''; position:absolute; inset:-4px; border-radius:50%; background:rgba(159,247,0,.3); animation:dotRing 1.6s ease-out infinite; }
+
+/* ── SIDEBAR ── */
+.studio-sidebar { display: flex; flex-direction: column; gap: 14px; }
+.studio-card {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 18px;
+  padding: 18px;
+  backdrop-filter: blur(20px);
+}
+.studio-card h3 { font-size: .75rem; font-weight: 800; color: var(--muted); text-transform: uppercase; letter-spacing: .08em; margin-bottom: 14px; }
+
+/* RTMP fields */
+.rtmp-field { margin-bottom: 12px; }
+.rtmp-field label { display: flex; align-items: center; gap: 7px; font-size: .73rem; font-weight: 700; color: var(--muted); margin-bottom: 5px; letter-spacing: .04em; text-transform: uppercase; }
+.rtmp-field input {
+  width: 100%;
+  background: rgba(255,255,255,.04);
+  border: 1px solid rgba(255,255,255,.08);
+  border-radius: 10px;
+  padding: 9px 12px;
+  color: #e8f5e0;
+  font-size: .82rem;
+  outline: none;
+  font-family: monospace;
+  transition: border-color .2s;
+  box-sizing: border-box;
+}
+.rtmp-field input:focus { border-color: var(--accent); box-shadow: 0 0 0 2px rgba(159,247,0,.1); }
+.rtmp-field .help { font-size: .67rem; color: var(--muted); margin-top: 3px; }
+.rtmp-badge {
+  display: none;
+  align-items: center;
+  gap: 5px;
+  margin-top: 4px;
+  font-size: .7rem;
+  font-weight: 700;
+  color: var(--accent);
+  letter-spacing: .03em;
+}
+.rtmp-badge.on { display: flex; }
+.rtmp-badge svg { width: 12px; height: 12px; fill: none; stroke: currentColor; stroke-width: 2.5; stroke-linecap: round; stroke-linejoin: round; }
+
+/* Quality selector */
+.quality-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 7px; }
+.q-opt {
+  padding: 9px 8px;
+  border-radius: 10px;
+  border: 1px solid rgba(255,255,255,.08);
+  background: rgba(255,255,255,.03);
+  cursor: pointer;
+  text-align: center;
+  font-size: .78rem;
+  font-weight: 700;
+  color: var(--muted);
+  transition: all .2s;
+}
+.q-opt.active { background: var(--accent-dim); border-color: rgba(159,247,0,.3); color: var(--accent); }
+.q-opt:hover:not(.active) { border-color: rgba(255,255,255,.2); color: #e8f5e0; }
+
+/* Stats */
+.stat-row { display: flex; justify-content: space-between; align-items: center; padding: 10px 0; border-bottom: 1px solid var(--border); }
+.stat-row:last-child { border-bottom: none; }
+.stat-label { font-size: .73rem; color: var(--muted); }
+.stat-val { font-weight: 800; font-size: .9rem; color: #e8f5e0; font-family: 'Montserrat', monospace; }
+
+/* Alerts */
+#studio-alert {
+  display: none;
+  padding: 11px 14px;
+  border-radius: 10px;
+  font-size: .82rem;
+  font-weight: 600;
+  margin-bottom: 4px;
+}
+#studio-alert.error { background: rgba(255,68,85,.1); border: 1px solid rgba(255,68,85,.25); color: #ff4455; }
+#studio-alert.success { background: rgba(159,247,0,.08); border: 1px solid rgba(159,247,0,.2); color: var(--accent); }
+#studio-alert.info { background: rgba(56,189,248,.08); border: 1px solid rgba(56,189,248,.2); color: #38bdf8; }
+
+/* Responsive */
+@media (max-width: 900px) {
+  .studio-wrap { grid-template-columns: 1fr; }
+  .studio-sidebar { order: -1; }
+}
+
+/* Canvas scan */
+#studio-canvas { position: fixed; inset: 0; pointer-events: none; z-index: 0; opacity: .35; }
+
+/* VU meter */
+.vu-wrap { display: flex; gap: 2px; align-items: flex-end; height: 28px; }
+.vu-bar { width: 5px; background: var(--accent); border-radius: 2px; transition: height .06s ease; }
+</style>
+{% endblock %}
+
+{% block content %}
+<canvas id="studio-canvas"></canvas>
+
+<div class="studio-wrap">
+
+  <!-- ── HEADER ── -->
+  <header class="studio-header">
+    <div class="studio-brand">
+      <span class="dot-live" id="live-dot"></span>
+      <div>
+        <h1>SafePlace Studio</h1>
+        <span class="status-text" id="status-text">Prêt à diffuser</span>
+      </div>
+    </div>
+    <div id="studio-timer" class="studio-timer">00:00:00</div>
+    <div style="display:flex;gap:8px">
+      <a href="{% url 'messages_inbox' %}" class="ctrl-btn ctrl-btn-ghost" style="font-size:.78rem;position:relative" id="studio-msg-link">
+        <span class="material-symbols-outlined" style="font-size:17px">mail</span>Messages
+        <span id="studio-unread-dot" style="display:none;position:absolute;top:6px;right:6px;width:7px;height:7px;border-radius:50%;background:#ff4455"></span>
+      </a>
+      <a href="{% url 'publish_episode' %}#import" class="ctrl-btn ctrl-btn-ghost" style="font-size:.78rem;background:rgba(159,247,0,.1);border-color:rgba(159,247,0,.25);color:#9ff700">
+        <span class="material-symbols-outlined" style="font-size:17px">upload_file</span>Importer podcast
+      </a>
+      <a href="{% url 'publish_episode' %}" class="ctrl-btn ctrl-btn-ghost" style="font-size:.78rem">
+        <span class="material-symbols-outlined" style="font-size:17px">publish</span>Publier
+      </a>
+      <a href="{% url 'live' %}" class="ctrl-btn ctrl-btn-ghost" style="font-size:.78rem">
+        <span class="material-symbols-outlined" style="font-size:17px">arrow_back</span>Lives
+      </a>
+    </div>
+  </header>
+
+  <!-- ── MAIN ── -->
+  <main class="studio-main">
+    <!-- Preview -->
+    <div class="preview-wrap">
+      <video id="preview-video" autoplay muted playsinline></video>
+      <div class="preview-overlay" id="preview-overlay">
+        <span class="material-symbols-outlined">videocam_off</span>
+        <p>Caméra non activée</p>
+        <button class="ctrl-btn ctrl-btn-accent" onclick="Studio.startCamera()" style="margin-top:8px">
+          <span class="material-symbols-outlined" style="font-size:17px">videocam</span>Activer la caméra
+        </button>
+      </div>
+      <!-- Quality indicator -->
+      <div class="quality-bar" id="quality-bar" style="display:none">
+        <div class="quality-bars" id="vu-bars"></div>
+        <span id="quality-label">HD</span>
+        <span style="color:var(--muted);margin-left:4px" id="fps-label"></span>
+      </div>
+    </div>
+
+    <!-- Alert -->
+    <div id="studio-alert"></div>
+
+    <!-- Controls -->
+    <div class="controls-bar">
+      <button class="ctrl-btn ctrl-btn-ghost" id="btn-cam" onclick="Studio.toggleCamera()">
+        <span class="material-symbols-outlined" id="icon-cam" style="font-size:18px">videocam</span>
+        <span id="lbl-cam">Caméra</span>
+      </button>
+      <button class="ctrl-btn ctrl-btn-ghost" id="btn-mic" onclick="Studio.toggleMic()">
+        <span class="material-symbols-outlined" id="icon-mic" style="font-size:18px">mic</span>
+        <span id="lbl-mic">Micro</span>
+      </button>
+      <button class="ctrl-btn ctrl-btn-ghost" onclick="Studio.switchCamera()">
+        <span class="material-symbols-outlined" style="font-size:18px">flip_camera_ios</span>
+      </button>
+      <!-- VU meter -->
+      <div class="vu-wrap" id="vu-wrap" style="margin-left:6px"></div>
+
+      <!-- Live sur le site uniquement -->
+      <button class="ctrl-btn go-live-btn" id="btn-golive-native" onclick="Studio.goLiveNative()" disabled
+        style="background:#38bdf8;color:#001a2e;box-shadow:0 0 24px rgba(56,189,248,.3);margin-left:auto">
+        <span class="material-symbols-outlined" style="font-size:18px;font-variation-settings:'FILL' 1">public</span>
+        Live sur le site
+      </button>
+
+      <!-- Go Live RTMP (YouTube / TikTok…) -->
+      <button class="ctrl-btn ctrl-btn-accent go-live-btn" id="btn-golive" onclick="Studio.goLive()" disabled
+        style="margin-left:0">
+        <span class="material-symbols-outlined" style="font-size:18px;font-variation-settings:'FILL' 1">sensors</span>
+        GO LIVE (RTMP)
+      </button>
+      <button class="ctrl-btn ctrl-btn-danger" id="btn-stop" onclick="Studio.stopLive()" style="display:none">
+        <span class="material-symbols-outlined" style="font-size:18px">stop_circle</span>
+        Arrêter
+      </button>
+    </div>
+
+    <!-- Platforms status -->
+    <div class="platforms-row" id="platforms-row">
+      <div class="platform-pill" id="pill-youtube" data-p="youtube">
+        <span class="pdot"></span>YouTube
+      </div>
+      <div class="platform-pill" id="pill-tiktok" data-p="tiktok">
+        <span class="pdot"></span>TikTok
+      </div>
+      <div class="platform-pill" id="pill-instagram" data-p="instagram">
+        <span class="pdot"></span>Instagram
+      </div>
+      <div class="platform-pill" id="pill-custom" data-p="custom" style="display:none">
+        <span class="pdot"></span>Custom
+      </div>
+    </div>
+  </main>
+
+  <!-- ── SIDEBAR ── -->
+  <aside class="studio-sidebar">
+
+    <!-- FFmpeg info card -->
+    <div class="studio-card" id="ffmpeg-card" style="display:none">
+      <h3>⚠ FFmpeg requis</h3>
+      <p style="font-size:.8rem;color:var(--muted);line-height:1.6;margin-bottom:10px">
+        FFmpeg n'est pas installé sur ce serveur. Pour streamer depuis le navigateur,
+        installez FFmpeg sur votre serveur.
+      </p>
+      <p style="font-size:.75rem;color:rgba(255,255,255,.3)">Ubuntu : <code style="color:var(--accent)">sudo apt install ffmpeg</code></p>
+    </div>
+
+    <!-- RTMP Config -->
+    <div class="studio-card">
+      <h3>Destinations RTMP</h3>
+      <div class="rtmp-field">
+        <label>
+          <span style="color:#ff0000">▶</span> YouTube
+        </label>
+        <input id="inp-yt" type="password" autocomplete="new-password" placeholder="Nouvelle clé (laisser vide pour conserver)"/>
+        <div class="rtmp-badge" id="badge-yt">
+          <svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>Clé configurée
+        </div>
+        <p class="help">YouTube Studio → Diffuser → Clé de stream</p>
+      </div>
+      <div class="rtmp-field">
+        <label>
+          <span style="color:#ff2d55">♪</span> TikTok
+        </label>
+        <input id="inp-tt" type="password" autocomplete="new-password" placeholder="Nouvelle clé (laisser vide pour conserver)"/>
+        <div class="rtmp-badge" id="badge-tt">
+          <svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>Clé configurée
+        </div>
+        <p class="help">TikTok Live Center → Paramètres stream</p>
+      </div>
+      <div class="rtmp-field">
+        <label>
+          <span style="color:#e1306c">◉</span> Instagram
+        </label>
+        <input id="inp-ig" type="password" autocomplete="new-password" placeholder="Nouvelle clé (laisser vide pour conserver)"/>
+        <div class="rtmp-badge" id="badge-ig">
+          <svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>Clé configurée
+        </div>
+        <p class="help">Instagram → Profil → Live → Clé</p>
+      </div>
+      <div class="rtmp-field">
+        <label>
+          <span style="color:#9ff700">+</span> Autre RTMP
+        </label>
+        <input id="inp-cu" type="password" autocomplete="new-password" placeholder="Nouvelle clé (laisser vide pour conserver)"/>
+        <div class="rtmp-badge" id="badge-cu">
+          <svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>Clé configurée
+        </div>
+      </div>
+      <button class="ctrl-btn ctrl-btn-ghost" style="width:100%;justify-content:center;margin-top:4px" onclick="Studio.saveConfig()">
+        <span class="material-symbols-outlined" style="font-size:16px">save</span>Sauvegarder
+      </button>
+    </div>
+
+    <!-- Qualité -->
+    <div class="studio-card">
+      <h3>Qualité du stream</h3>
+      <div class="quality-grid" id="quality-grid">
+        <div class="q-opt" data-q="360p">360p<br><small style="font-weight:400;opacity:.6">800 kbps</small></div>
+        <div class="q-opt" data-q="480p">480p<br><small style="font-weight:400;opacity:.6">1.5 Mbps</small></div>
+        <div class="q-opt active" data-q="720p">720p HD<br><small style="font-weight:400;opacity:.6">2.5 Mbps</small></div>
+        <div class="q-opt" data-q="1080p">1080p FHD<br><small style="font-weight:400;opacity:.6">4.5 Mbps</small></div>
+      </div>
+    </div>
+
+    <!-- Stats -->
+    <div class="studio-card">
+      <h3>Statistiques</h3>
+      <div class="stat-row">
+        <span class="stat-label">Statut</span>
+        <span class="stat-val" id="stat-status">Arrêté</span>
+      </div>
+      <div class="stat-row">
+        <span class="stat-label">Durée</span>
+        <span class="stat-val" id="stat-duration">—</span>
+      </div>
+      <div class="stat-row">
+        <span class="stat-label">Plateformes</span>
+        <span class="stat-val" id="stat-platforms">—</span>
+      </div>
+      <div class="stat-row">
+        <span class="stat-label">FFmpeg</span>
+        <span class="stat-val" id="stat-ffmpeg" style="font-size:.78rem">Vérification…</span>
+      </div>
+    </div>
+
+  </aside>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+/* ═══ BACKGROUND CANVAS ═══ */
+(function(){
+  const c=document.getElementById('studio-canvas'),ctx=c.getContext('2d');
+  let W,H,pts=[];
+  function resize(){W=c.width=innerWidth;H=c.height=innerHeight}
+  resize();window.addEventListener('resize',resize);
+  for(let i=0;i<35;i++)pts.push({x:Math.random()*W,y:Math.random()*H,vx:(Math.random()-.5)*.2,vy:(Math.random()-.5)*.2,r:.5+Math.random()*.7,a:.03+Math.random()*.08});
+  (function draw(){
+    ctx.clearRect(0,0,W,H);
+    pts.forEach(p=>{p.x+=p.vx;p.y+=p.vy;if(p.x<0||p.x>W)p.vx*=-1;if(p.y<0||p.y>H)p.vy*=-1;ctx.beginPath();ctx.arc(p.x,p.y,p.r,0,Math.PI*2);ctx.fillStyle='rgba(159,247,0,'+p.a+')';ctx.fill();});
+    for(let i=0;i<pts.length;i++)for(let j=i+1;j<pts.length;j++){const dx=pts[i].x-pts[j].x,dy=pts[i].y-pts[j].y,d=Math.sqrt(dx*dx+dy*dy);if(d<100){ctx.strokeStyle='rgba(159,247,0,'+(.05*(1-d/100))+')';ctx.lineWidth=.4;ctx.beginPath();ctx.moveTo(pts[i].x,pts[i].y);ctx.lineTo(pts[j].x,pts[j].y);ctx.stroke();}}
+    requestAnimationFrame(draw);
+  })();
+})();
+
+/* ═══ VU METER ═══ */
+const vuWrap = document.getElementById('vu-wrap');
+const vuBars = document.getElementById('vu-bars');
+for(let i=0;i<16;i++){
+  const b=document.createElement('div');b.className='vu-bar';b.style.height='4px';vuWrap.appendChild(b);
+  const b2=document.createElement('div');b2.className='vu-bar';b2.style.height='4px';vuBars.appendChild(b2);
+}
+
+/* ═══ STUDIO ENGINE ═══ */
+const Studio = {
+  stream: null,          // MediaStream
+  recorder: null,        // MediaRecorder
+  isLive: false,
+  camOn: true,
+  micOn: true,
+  quality: '720p',
+  startTime: null,
+  timerInterval: null,
+  ingestInterval: null,
+  audioCtx: null,
+  analyser: null,
+  facingMode: 'user',
+  ffmpegOk: false,
+  chunks: [],
+  _chunkQueue: [],       // queue séquentielle RTMP
+  _sending: false,       // verrou envoi RTMP
+  _configured: { youtube: false, tiktok: false, instagram: false, custom: false },
+  nativeStreamId: null,  // stream live natif sur le site
+
+  API_BASE: '{{ request.build_absolute_uri|slice:":-1" }}'.replace(/\/$/, ''),
+
+  async init() {
+    // Check FFmpeg + load RTMP config status
+    try {
+      const r = await fetch(this.API_BASE + '/api/v1/multistream/config/', {
+        headers: { 'X-CSRFToken': this.getCsrf() }
+      });
+      const d = await r.json();
+      this.ffmpegOk = d.ffmpeg_available;
+      document.getElementById('stat-ffmpeg').textContent = this.ffmpegOk ? '✓ Disponible' : '✗ Non installé';
+      document.getElementById('stat-ffmpeg').style.color = this.ffmpegOk ? '#9ff700' : '#ff4455';
+      if (!this.ffmpegOk) document.getElementById('ffmpeg-card').style.display = 'block';
+      // Update pills + badges (never populate inputs with masked keys)
+      this.updatePills(d);
+    } catch(e) {}
+
+    // Quality selector
+    document.querySelectorAll('.q-opt').forEach(el => {
+      el.addEventListener('click', () => {
+        document.querySelectorAll('.q-opt').forEach(x => x.classList.remove('active'));
+        el.classList.add('active');
+        this.quality = el.dataset.q;
+      });
+    });
+  },
+
+  getCsrf() {
+    const m = document.cookie.match(/csrftoken=([^;]+)/);
+    return m ? m[1] : '';
+  },
+
+  async startCamera() {
+    try {
+      this.stream = await navigator.mediaDevices.getUserMedia({
+        video: { width: {ideal:1280}, height: {ideal:720}, facingMode: this.facingMode },
+        audio: true,
+      });
+      document.getElementById('preview-video').srcObject = this.stream;
+      document.getElementById('preview-overlay').classList.add('hidden');
+      document.getElementById('quality-bar').style.display = 'flex';
+      document.getElementById('btn-golive').disabled = false;
+      document.getElementById('btn-golive-native').disabled = false;
+      this.setupAudioMeter();
+      this.showAlert('Caméra activée. Cliquez « Live sur le site » pour diffuser directement, ou configurez vos clés RTMP pour YouTube/TikTok.', 'info');
+    } catch(e) {
+      this.showAlert('Impossible d\'accéder à la caméra : ' + e.message, 'error');
+    }
+  },
+
+  setupAudioMeter() {
+    if (!this.stream) return;
+    this.audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    this.analyser = this.audioCtx.createAnalyser();
+    this.analyser.fftSize = 64;
+    const src = this.audioCtx.createMediaStreamSource(this.stream);
+    src.connect(this.analyser);
+    const data = new Uint8Array(this.analyser.frequencyBinCount);
+    const bars = vuWrap.querySelectorAll('.vu-bar');
+    const bars2 = vuBars.querySelectorAll('.vu-bar');
+    const tick = () => {
+      this.analyser.getByteFrequencyData(data);
+      bars.forEach((b,i) => { b.style.height = Math.max(4, (data[i] || 0) / 4) + 'px'; });
+      bars2.forEach((b,i) => { b.style.height = Math.max(2, (data[i] || 0) / 5) + 'px'; });
+      requestAnimationFrame(tick);
+    };
+    tick();
+  },
+
+  toggleCamera() {
+    if (!this.stream) { this.startCamera(); return; }
+    this.camOn = !this.camOn;
+    this.stream.getVideoTracks().forEach(t => t.enabled = this.camOn);
+    document.getElementById('icon-cam').textContent = this.camOn ? 'videocam' : 'videocam_off';
+    document.getElementById('lbl-cam').textContent = this.camOn ? 'Caméra' : 'Caméra (off)';
+  },
+
+  toggleMic() {
+    if (!this.stream) return;
+    this.micOn = !this.micOn;
+    this.stream.getAudioTracks().forEach(t => t.enabled = this.micOn);
+    document.getElementById('icon-mic').textContent = this.micOn ? 'mic' : 'mic_off';
+    document.getElementById('lbl-mic').textContent = this.micOn ? 'Micro' : 'Micro (off)';
+  },
+
+  async switchCamera() {
+    this.facingMode = this.facingMode === 'user' ? 'environment' : 'user';
+    if (this.stream) {
+      this.stream.getTracks().forEach(t => t.stop());
+      await this.startCamera();
+    }
+  },
+
+  _buildConfigBody() {
+    // Only include non-empty values so existing keys are preserved
+    const body = { video_quality: this.quality };
+    const yt = document.getElementById('inp-yt').value.trim();
+    const tt = document.getElementById('inp-tt').value.trim();
+    const ig = document.getElementById('inp-ig').value.trim();
+    const cu = document.getElementById('inp-cu').value.trim();
+    if (yt) body.youtube_rtmp   = yt;
+    if (tt) body.tiktok_rtmp    = tt;
+    if (ig) body.instagram_rtmp = ig;
+    if (cu) body.custom_rtmp    = cu;
+    return body;
+  },
+
+  async saveConfig() {
+    try {
+      const r = await fetch(this.API_BASE + '/api/v1/multistream/config/', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'X-CSRFToken': this.getCsrf() },
+        body: JSON.stringify(this._buildConfigBody()),
+      });
+      const d = await r.json();
+      // Clear inputs after successful save (keys are now stored server-side)
+      ['inp-yt','inp-tt','inp-ig','inp-cu'].forEach(id => { document.getElementById(id).value = ''; });
+      this.updatePills(d);
+      this.showAlert('Configuration sauvegardée !', 'success');
+    } catch(e) {
+      this.showAlert('Erreur de sauvegarde : ' + e.message, 'error');
+    }
+  },
+
+  updatePills(cfg) {
+    // Prefer explicit *_configured booleans; fall back to truthy masked value
+    const map = {
+      youtube:   cfg.youtube_configured   ?? !!cfg.youtube_rtmp,
+      tiktok:    cfg.tiktok_configured    ?? !!cfg.tiktok_rtmp,
+      instagram: cfg.instagram_configured ?? !!cfg.instagram_rtmp,
+      custom:    cfg.custom_configured    ?? !!cfg.custom_rtmp,
+    };
+    // Store for goLive hasRtmp check
+    this._configured = map;
+
+    const badgeMap = { youtube: 'badge-yt', tiktok: 'badge-tt', instagram: 'badge-ig', custom: 'badge-cu' };
+
+    Object.entries(map).forEach(([k, has]) => {
+      const p = document.getElementById('pill-' + k);
+      if (p) {
+        p.classList.toggle('configured', has);
+        if (k === 'custom') p.style.display = has ? 'inline-flex' : 'none';
+      }
+      const b = document.getElementById(badgeMap[k]);
+      if (b) b.classList.toggle('on', has);
+    });
+    document.getElementById('stat-platforms').textContent = (cfg.platforms || []).join(', ') || '—';
+  },
+
+  // ── Live uniquement sur le site (sans RTMP, sans FFmpeg) ────────────────
+  async goLiveNative() {
+    if (!this.stream) { this.showAlert('Activez d\'abord votre caméra.', 'error'); return; }
+
+    const mimeType = MediaRecorder.isTypeSupported('video/webm;codecs=vp8,opus')
+      ? 'video/webm;codecs=vp8,opus'
+      : 'video/webm';
+
+    try {
+      const nr = await fetch(this.API_BASE + '/api/v1/live/native/start/', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'X-CSRFToken': this.getCsrf() },
+        body: JSON.stringify({ title: 'Live SafePlace', mime_type: mimeType }),
+      });
+      if (!nr.ok) { this.showAlert('Impossible de démarrer le live natif.', 'error'); return; }
+      const nd = await nr.json();
+      this.nativeStreamId = nd.stream_id;
+    } catch(e) {
+      this.showAlert('Erreur démarrage : ' + e.message, 'error'); return;
+    }
+
+    this._chunkQueue = [];
+    this._sending = false;
+    this.recorder = new MediaRecorder(this.stream, { mimeType, videoBitsPerSecond: 2_500_000 });
+    this.recorder.ondataavailable = (e) => { if (e.data.size > 0) this._pushNative(e.data); };
+    this.recorder.start(1000);
+
+    this.isLive = true;
+    this.startTime = Date.now();
+    this.startTimer();
+
+    document.getElementById('live-dot').classList.add('on');
+    document.getElementById('btn-golive-native').style.display = 'none';
+    document.getElementById('btn-golive').style.display = 'none';
+    document.getElementById('btn-stop').style.display = 'inline-flex';
+    document.getElementById('stat-status').textContent = 'EN DIRECT (site)';
+    document.getElementById('stat-status').style.color = '#38bdf8';
+    document.getElementById('studio-timer').classList.add('on');
+    document.getElementById('status-text').textContent = '🔴 En direct sur le site';
+
+    this.showAlert('🔴 Live démarré ! Les visiteurs peuvent vous voir sur la page Live.', 'success');
+  },
+
+  async goLive() {
+    if (!this.stream) { this.showAlert('Activez d\'abord votre caméra.', 'error'); return; }
+
+    // Vérifier qu'au moins une clé RTMP est configurée (déjà sauvegardée OU nouvellement saisie)
+    const newKeys = ['inp-yt','inp-tt','inp-ig','inp-cu'].some(id => document.getElementById(id)?.value.trim());
+    const hasRtmp = newKeys || Object.values(this._configured).some(Boolean);
+    if (!hasRtmp) {
+      this.showAlert('Renseignez au moins une clé RTMP (YouTube, TikTok, Instagram…).', 'error');
+      return;
+    }
+
+    if (!this.ffmpegOk) {
+      this.showAlert('FFmpeg n\'est pas installé sur le serveur. Impossible de streamer.', 'error');
+      return;
+    }
+
+    // Save config first (only non-empty fields), stop on error
+    try {
+      const r = await fetch(this.API_BASE + '/api/v1/multistream/config/', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'X-CSRFToken': this.getCsrf() },
+        body: JSON.stringify(this._buildConfigBody()),
+      });
+      if (!r.ok) { this.showAlert('Erreur sauvegarde config RTMP.', 'error'); return; }
+      const d = await r.json();
+      ['inp-yt','inp-tt','inp-ig','inp-cu'].forEach(id => { document.getElementById(id).value = ''; });
+      this.updatePills(d);
+    } catch(e) {
+      this.showAlert('Impossible de sauvegarder la config : ' + e.message, 'error');
+      return;
+    }
+
+    // Start FFmpeg relay on server
+    try {
+      const r = await fetch(this.API_BASE + '/api/v1/multistream/start/', {
+        method: 'POST',
+        headers: { 'X-CSRFToken': this.getCsrf() },
+      });
+      const d = await r.json();
+      if (!r.ok) {
+        this.showAlert(d.error || 'Erreur démarrage', 'error');
+        return;
+      }
+      this.showAlert('FFmpeg démarré ! Diffusion sur : ' + (d.platforms || []).join(', '), 'success');
+    } catch(e) {
+      this.showAlert('Impossible de démarrer le relay : ' + e.message, 'error');
+      return;
+    }
+
+    // Start MediaRecorder
+    const mimeType = MediaRecorder.isTypeSupported('video/webm;codecs=vp8,opus')
+      ? 'video/webm;codecs=vp8,opus'
+      : 'video/webm';
+
+    // Démarrer le stream live natif sur le site
+    try {
+      const nr = await fetch(this.API_BASE + '/api/v1/live/native/start/', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'X-CSRFToken': this.getCsrf() },
+        body: JSON.stringify({ title: '{{ stream_config.title|default:"Live SafePlace" }}', mime_type: mimeType }),
+      });
+      const nd = await nr.json();
+      this.nativeStreamId = nd.stream_id;
+      this.showAlert('🔴 Live sur le site démarré ! Les spectateurs peuvent vous voir maintenant.', 'success');
+    } catch(e) {
+      this.showAlert('Live natif non démarré : ' + e.message, 'info');
+    }
+
+    this._chunkQueue = [];
+    this._sending = false;
+    this.recorder = new MediaRecorder(this.stream, { mimeType, videoBitsPerSecond: 2_500_000 });
+    this.recorder.ondataavailable = (e) => { if (e.data.size > 0) this.sendChunk(e.data); };
+    this.recorder.start(1000); // 1s chunks — moins de congestion HTTP
+
+    this.isLive = true;
+    this.startTime = Date.now();
+    this.startTimer();
+
+    // UI
+    document.getElementById('live-dot').classList.add('on');
+    document.getElementById('btn-golive').style.display = 'none';
+    document.getElementById('btn-stop').style.display = 'inline-flex';
+    document.getElementById('stat-status').textContent = 'EN DIRECT';
+    document.getElementById('stat-status').style.color = '#ff4455';
+    document.getElementById('studio-timer').classList.add('on');
+
+    // Update platform pills to live
+    ['youtube','tiktok','instagram','custom'].forEach(p => {
+      const pill = document.getElementById('pill-' + p);
+      if (pill && pill.classList.contains('configured')) pill.classList.add('live-on');
+    });
+  },
+
+  sendChunk(blob) {
+    this._chunkQueue.push(blob);
+    if (!this._sending) this._flushQueue();
+    // Envoi parallèle vers le live natif sur le site
+    if (this.nativeStreamId) this._pushNative(blob);
+  },
+
+  _pushNative(blob) {
+    fetch(this.API_BASE + '/api/v1/live/native/' + this.nativeStreamId + '/push/', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/octet-stream', 'X-CSRFToken': this.getCsrf() },
+      body: blob,
+    }).catch(() => {});
+  },
+
+  async _flushQueue() {
+    if (this._sending || !this._chunkQueue.length) return;
+    this._sending = true;
+    while (this._chunkQueue.length && this.isLive) {
+      const blob = this._chunkQueue.shift();
+      try {
+        const r = await fetch(this.API_BASE + '/api/v1/multistream/ingest/', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/octet-stream', 'X-CSRFToken': this.getCsrf() },
+          body: blob,
+        });
+        if (!r.ok) {
+          const d = await r.json().catch(() => ({}));
+          if (d.ffmpeg_crash) {
+            this.showAlert('FFmpeg s\'est arrêté : ' + (d.stderr || 'erreur inconnue'), 'error');
+            this.stopLive();
+            break;
+          }
+        }
+      } catch(e) { /* réseau — on continue */ }
+    }
+    this._sending = false;
+  },
+
+  async stopLive() {
+    this.isLive = false;
+    this._chunkQueue = [];
+    if (this.recorder) { this.recorder.stop(); this.recorder = null; }
+    clearInterval(this.timerInterval);
+
+    // Arrêter le live natif sur le site
+    if (this.nativeStreamId) {
+      fetch(this.API_BASE + '/api/v1/live/native/' + this.nativeStreamId + '/stop/', {
+        method: 'POST', headers: { 'X-CSRFToken': this.getCsrf() }
+      }).catch(() => {});
+      this.nativeStreamId = null;
+    }
+
+    try {
+      await fetch(this.API_BASE + '/api/v1/multistream/stop/', {
+        method: 'POST', headers: { 'X-CSRFToken': this.getCsrf() }
+      });
+    } catch(e) {}
+
+    document.getElementById('live-dot').classList.remove('on');
+    document.getElementById('btn-golive').style.display = 'inline-flex';
+    document.getElementById('btn-golive-native').style.display = 'inline-flex';
+    document.getElementById('btn-stop').style.display = 'none';
+    document.getElementById('stat-status').textContent = 'Arrêté';
+    document.getElementById('stat-status').style.color = '';
+    document.getElementById('studio-timer').classList.remove('on');
+    document.getElementById('status-text').textContent = 'Prêt à diffuser';
+
+    ['youtube','tiktok','instagram','custom'].forEach(p => {
+      document.getElementById('pill-' + p)?.classList.remove('live-on');
+    });
+    this.showAlert('Stream arrêté.', 'info');
+  },
+
+  startTimer() {
+    const el = document.getElementById('studio-timer');
+    const dur = document.getElementById('stat-duration');
+    this.timerInterval = setInterval(() => {
+      const s = Math.floor((Date.now() - this.startTime) / 1000);
+      const h = String(Math.floor(s / 3600)).padStart(2, '0');
+      const m = String(Math.floor((s % 3600) / 60)).padStart(2, '0');
+      const sc = String(s % 60).padStart(2, '0');
+      el.textContent = `${h}:${m}:${sc}`;
+      dur.textContent = `${h}:${m}:${sc}`;
+    }, 1000);
+  },
+
+  showAlert(msg, type) {
+    const el = document.getElementById('studio-alert');
+    el.textContent = msg;
+    el.className = type;
+    el.style.display = 'block';
+    if (type !== 'error') setTimeout(() => el.style.display = 'none', 5000);
+  },
+};
+
+Studio.init();
+
+/* ── Badge non lus messages ── */
+(function checkUnread() {
+  fetch('/api/v1/messages/?page_size=1', {
+    headers: { 'X-CSRFToken': (document.cookie.match(/csrftoken=([^;]+)/) || [])[1] || '' }
+  }).then(function(r) { return r.json(); }).then(function(d) {
+    var dot = document.getElementById('studio-unread-dot');
+    if (dot && d.stats && d.stats.unread > 0) {
+      dot.style.display = 'block';
+      var link = document.getElementById('studio-msg-link');
+      if (link) link.title = d.stats.unread + ' message(s) non lu(s)';
+    }
+  }).catch(function(){});
+})();
+</script>
+{% endblock %}

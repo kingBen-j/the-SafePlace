@@ -1,10 +1,10 @@
 version: '3.9'
 
 services:
-  # Service PostgreSQL - Base de données
   db:
     image: postgres:16-alpine
     container_name: safeplace_db
+    restart: unless-stopped
     environment:
       POSTGRES_DB: ${DB_NAME:-safeplace_db}
       POSTGRES_USER: ${DB_USER:-safeplace_user}
@@ -22,53 +22,70 @@ services:
     networks:
       - safeplace_network
 
-  # Service Redis - Cache et sessions
   redis:
     image: redis:7-alpine
     container_name: safeplace_redis
-    command: redis-server --appendonly yes --requirepass ${REDIS_PASSWORD:-redis_password_123}
+    restart: unless-stopped
+    command: >
+      redis-server
+      --appendonly yes
+      --requirepass ${REDIS_PASSWORD:-redis_password_123}
+      --maxmemory 256mb
+      --maxmemory-policy allkeys-lru
+      --tcp-backlog 511
+      --tcp-keepalive 60
     volumes:
       - redis_data:/data
     ports:
       - "6379:6379"
     healthcheck:
-      test: ["CMD", "redis-cli", "ping"]
+      test: ["CMD", "redis-cli", "-a", "${REDIS_PASSWORD:-redis_password_123}", "ping"]
       interval: 10s
       timeout: 5s
       retries: 5
     networks:
       - safeplace_network
 
-  # Service Django Web - Application principale
   web:
     build: .
     container_name: safeplace_web
+    restart: unless-stopped
     command: >
-      sh -c "python manage.py migrate &&
+      sh -c "python manage.py migrate --noinput &&
              python manage.py collectstatic --noinput &&
-             gunicorn --bind 0.0.0.0:8000 --workers 4 --timeout 120 Safeplace.wsgi:application"
+             gunicorn
+               --bind 0.0.0.0:8000
+               --workers ${WEB_CONCURRENCY:-4}
+               --threads ${WEB_THREADS:-2}
+               --worker-class gthread
+               --timeout 120
+               --max-requests 1000
+               --max-requests-jitter 100
+               --keep-alive 5
+               --access-logfile -
+               --error-logfile -
+               Safeplace.wsgi:application"
     environment:
       DEBUG: ${DEBUG:-False}
       SECRET_KEY: ${SECRET_KEY:-your-secret-key-change-in-production}
       ALLOWED_HOSTS: ${ALLOWED_HOSTS:-localhost,127.0.0.1}
-      
+
       # Base de données
       DB_ENGINE: django.db.backends.postgresql
       DB_NAME: ${DB_NAME:-safeplace_db}
       DB_USER: ${DB_USER:-safeplace_user}
       DB_PASSWORD: ${DB_PASSWORD:-safeplace_password_123}
-      DB_HOST: db
+      DB_HOST: ${DB_HOST:-db}
       DB_PORT: 5432
-      
+
       # Redis
       REDIS_HOST: redis
       REDIS_PORT: 6379
       REDIS_PASSWORD: ${REDIS_PASSWORD:-redis_password_123}
-      
-      # Stripe
-      STRIPE_PUBLIC_KEY: ${STRIPE_PUBLIC_KEY:-pk_test_your_key}
-      STRIPE_SECRET_KEY: ${STRIPE_SECRET_KEY:-sk_test_your_key}
-      
+      CELERY_BROKER_URL: redis://:${REDIS_PASSWORD:-redis_password_123}@redis:6379/0
+      CELERY_RESULT_BACKEND: redis://:${REDIS_PASSWORD:-redis_password_123}@redis:6379/0
+      CACHE_REDIS_URL: redis://:${REDIS_PASSWORD:-redis_password_123}@redis:6379/1
+
       # Email
       EMAIL_BACKEND: ${EMAIL_BACKEND:-django.core.mail.backends.console.EmailBackend}
       EMAIL_HOST: ${EMAIL_HOST:-smtp.gmail.com}
@@ -76,29 +93,35 @@ services:
       EMAIL_HOST_USER: ${EMAIL_HOST_USER:-}
       EMAIL_HOST_PASSWORD: ${EMAIL_HOST_PASSWORD:-}
       EMAIL_USE_TLS: ${EMAIL_USE_TLS:-True}
-    
+
+      # Gunicorn scaling
+      WEB_CONCURRENCY: ${WEB_CONCURRENCY:-4}
+      WEB_THREADS: ${WEB_THREADS:-2}
+
     volumes:
-      - .:/app
       - static_volume:/app/staticfiles
       - media_volume:/app/media
-    
-    ports:
-      - "8000:8000"
-    
+    expose:
+      - "8000"
     depends_on:
       db:
         condition: service_healthy
       redis:
         condition: service_healthy
-    
     networks:
       - safeplace_network
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:8000/health/ || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
 
-  # Service Celery Worker - Tâches asynchrones
   celery:
     build: .
     container_name: safeplace_celery
-    command: celery -A Safeplace worker -l info
+    restart: unless-stopped
+    command: celery -A Safeplace worker -l info --concurrency=${CELERY_WORKERS:-4} --max-tasks-per-child=500
     environment:
       DEBUG: ${DEBUG:-False}
       SECRET_KEY: ${SECRET_KEY:-your-secret-key-change-in-production}
@@ -106,28 +129,22 @@ services:
       DB_NAME: ${DB_NAME:-safeplace_db}
       DB_USER: ${DB_USER:-safeplace_user}
       DB_PASSWORD: ${DB_PASSWORD:-safeplace_password_123}
-      DB_HOST: db
+      DB_HOST: ${DB_HOST:-db}
       DB_PORT: 5432
-      REDIS_HOST: redis
-      REDIS_PORT: 6379
-      REDIS_PASSWORD: ${REDIS_PASSWORD:-redis_password_123}
-      STRIPE_SECRET_KEY: ${STRIPE_SECRET_KEY:-sk_test_your_key}
-    
-    volumes:
-      - .:/app
-    
+      CELERY_BROKER_URL: redis://:${REDIS_PASSWORD:-redis_password_123}@redis:6379/0
+      CELERY_RESULT_BACKEND: redis://:${REDIS_PASSWORD:-redis_password_123}@redis:6379/0
+      CACHE_REDIS_URL: redis://:${REDIS_PASSWORD:-redis_password_123}@redis:6379/1
     depends_on:
       - db
       - redis
       - web
-    
     networks:
       - safeplace_network
 
-  # Service Celery Beat - Scheduler pour tâches planifiées
   celery_beat:
     build: .
     container_name: safeplace_celery_beat
+    restart: unless-stopped
     command: celery -A Safeplace beat -l info --scheduler django_celery_beat.schedulers:DatabaseScheduler
     environment:
       DEBUG: ${DEBUG:-False}
@@ -136,27 +153,21 @@ services:
       DB_NAME: ${DB_NAME:-safeplace_db}
       DB_USER: ${DB_USER:-safeplace_user}
       DB_PASSWORD: ${DB_PASSWORD:-safeplace_password_123}
-      DB_HOST: db
+      DB_HOST: ${DB_HOST:-db}
       DB_PORT: 5432
-      REDIS_HOST: redis
-      REDIS_PORT: 6379
-      REDIS_PASSWORD: ${REDIS_PASSWORD:-redis_password_123}
-    
-    volumes:
-      - .:/app
-    
+      CELERY_BROKER_URL: redis://:${REDIS_PASSWORD:-redis_password_123}@redis:6379/0
+      CELERY_RESULT_BACKEND: redis://:${REDIS_PASSWORD:-redis_password_123}@redis:6379/0
     depends_on:
       - db
       - redis
       - web
-    
     networks:
       - safeplace_network
 
-  # Service Nginx - Reverse proxy et serveur statique
   nginx:
     image: nginx:alpine
     container_name: safeplace_nginx
+    restart: unless-stopped
     ports:
       - "80:80"
       - "443:443"
@@ -171,9 +182,9 @@ services:
       - safeplace_network
 
 volumes:
-  postgres_data:
-    driver: local
   redis_data:
+    driver: local
+  postgres_data:
     driver: local
   static_volume:
     driver: local

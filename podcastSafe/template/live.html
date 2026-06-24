@@ -1,156 +1,1343 @@
 {% extends 'base.html' %}
 {% load static %}
 {% block title %}Live — The SafePlace by K{% endblock %}
+
 {% block content %}
-<main class="max-w-container-max-width mx-auto px-4 md:px-margin-desktop py-10">
 
-  <div class="mb-10 sp-fade-in">
-    <h1 class="font-display-lg text-primary text-3xl md:text-5xl mb-3">Émissions Live</h1>
-    <p class="text-on-surface-variant text-body-lg">Rejoignez nos lives sur toutes les plateformes.</p>
-    <!-- Waveform animée -->
-    <div class="sp-waveform sp-waveform--sm mt-4">
-      <div class="sp-waveform__bar"></div>
-      <div class="sp-waveform__bar"></div>
-      <div class="sp-waveform__bar"></div>
-      <div class="sp-waveform__bar"></div>
-      <div class="sp-waveform__bar"></div>
-      <div class="sp-waveform__bar"></div>
-      <div class="sp-waveform__bar"></div>
-      <div class="sp-waveform__bar"></div>
+<!-- ══════════════════════════════════════════════
+     GOOGLE FONTS + TAILWIND CDN
+══════════════════════════════════════════════ -->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200&display=swap" rel="stylesheet">
+<script src="https://cdn.tailwindcss.com"></script>
+
+<script>
+  tailwind.config = {
+    theme: {
+      extend: {
+        fontFamily: { display: ['Poppins','sans-serif'], body: ['Poppins','sans-serif'] },
+        colors: {
+          lime: { 400: '#9ff700', 500: '#7fd600' },
+          forest: { 900: '#00150f', 800: '#00261b', 700: '#0b3d2e', 600: '#14503d' },
+        },
+        keyframes: {
+          float: { '0%,100%': { transform: 'translateY(0px)' }, '50%': { transform: 'translateY(-14px)' } },
+          fadeUp: { from: { opacity: 0, transform: 'translateY(24px)' }, to: { opacity: 1, transform: 'translateY(0)' } },
+          orbDrift: { '0%,100%': { transform: 'translate(0,0) scale(1)' }, '50%': { transform: 'translate(20px,-15px) scale(1.06)' } },
+          waveBar: { '0%,100%': { transform: 'scaleY(0.3)' }, '50%': { transform: 'scaleY(1)' } },
+          livePulse: { '0%,100%': { opacity:1, transform:'scale(1)' }, '50%': { opacity:0.4, transform:'scale(1.6)' } },
+        },
+        animation: {
+          float: 'float 7s ease-in-out infinite',
+          fadeUp: 'fadeUp 0.65s ease forwards',
+          orbDrift: 'orbDrift 13s ease-in-out infinite',
+          waveBar: 'waveBar 1.2s ease-in-out infinite',
+          livePulse: 'livePulse 1.4s ease-in-out infinite',
+        },
+      }
+    }
+  }
+</script>
+
+<style>
+  *, *::before, *::after { box-sizing: border-box; }
+  body { font-family: 'Poppins', sans-serif; background: #f4f6f0; color: #1a2214; }
+
+  /* ── Noise grain ── */
+  .grain::before {
+    content: '';
+    position: absolute; inset: 0; pointer-events: none; z-index: 1;
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.04'/%3E%3C/svg%3E");
+    opacity: 0.45; border-radius: inherit;
+  }
+
+  /* ── Hero banner ── */
+  .live-hero {
+    position: relative; overflow: hidden;
+    background: linear-gradient(145deg, #00150f 0%, #00261b 50%, #0b3d2e 100%);
+    border-radius: 28px;
+    padding: 56px 48px;
+    margin-bottom: 48px;
+  }
+  @media(max-width:640px){ .live-hero { padding: 36px 24px; } }
+
+  .hero-orb {
+    position: absolute; border-radius: 50%;
+    background: radial-gradient(circle, rgba(159,247,0,0.12) 0%, transparent 70%);
+    pointer-events: none;
+  }
+
+  /* ── Waveform ── */
+  .waveform { display: flex; align-items: center; gap: 3px; height: 28px; }
+  .waveform span {
+    display: block; width: 3px; border-radius: 99px;
+    background: rgba(159,247,0,0.6);
+    animation: waveBar 1.2s ease-in-out infinite;
+    transform-origin: bottom;
+  }
+  .waveform span:nth-child(1){ height:35%; animation-delay:0s; }
+  .waveform span:nth-child(2){ height:70%; animation-delay:.1s; }
+  .waveform span:nth-child(3){ height:55%; animation-delay:.2s; }
+  .waveform span:nth-child(4){ height:100%;animation-delay:.3s; }
+  .waveform span:nth-child(5){ height:60%; animation-delay:.4s; }
+  .waveform span:nth-child(6){ height:80%; animation-delay:.15s; }
+  .waveform span:nth-child(7){ height:45%; animation-delay:.25s; }
+  .waveform span:nth-child(8){ height:90%; animation-delay:.05s; }
+
+  /* ── Live dot ── */
+  .live-dot {
+    width: 9px; height: 9px; border-radius: 50%;
+    background: #ef4444;
+    animation: livePulse 1.4s ease-in-out infinite;
+    box-shadow: 0 0 8px rgba(239,68,68,0.8);
+    flex-shrink: 0;
+  }
+
+  /* ── Platform card ── */
+  .platform-card {
+    display: flex; flex-direction: column; align-items: center; gap: 10px;
+    padding: 20px 12px;
+    background: #fff;
+    border-radius: 20px;
+    border: 1.5px solid rgba(0,38,27,0.07);
+    cursor: pointer;
+    transition: transform 0.3s cubic-bezier(0.34,1.56,0.64,1), box-shadow 0.3s ease, border-color 0.2s;
+    position: relative; overflow: hidden;
+  }
+  .platform-icon {
+    background: var(--bg-color, #00261b);
+  }
+  .platform-card:hover {
+    transform: translateY(-5px) scale(1.02);
+    box-shadow: 0 16px 40px rgba(0,38,27,0.1), 0 0 0 1px rgba(159,247,0,0.2);
+    border-color: rgba(159,247,0,0.3);
+  }
+  .platform-card .icon-wrap {
+    width: 52px; height: 52px; border-radius: 16px;
+    display: flex; align-items: center; justify-content: center;
+    transition: transform 0.3s cubic-bezier(0.34,1.56,0.64,1);
+  }
+  .platform-card:hover .icon-wrap { transform: scale(1.12) rotate(-4deg); }
+
+  /* ── Stream card ── */
+  .stream-card {
+    position: relative; overflow: hidden;
+    background: linear-gradient(145deg, #00261b, #0b3d2e);
+    border-radius: 24px;
+    border: 1px solid rgba(159,247,0,0.1);
+    transition: transform 0.3s cubic-bezier(0.34,1.56,0.64,1), box-shadow 0.3s ease;
+  }
+  .stream-card:hover {
+    transform: translateY(-6px);
+    box-shadow: 0 24px 60px rgba(0,0,0,0.2), 0 0 0 1px rgba(159,247,0,0.2);
+  }
+
+  /* ── Shine ── */
+  .card-shine {
+    position: absolute; inset: 0; pointer-events: none; z-index: 10; border-radius: inherit;
+    background: radial-gradient(circle at var(--mx,50%) var(--my,50%), rgba(255,255,255,0.1) 0%, transparent 55%);
+    opacity: 0; transition: opacity 0.3s;
+  }
+  .stream-card:hover .card-shine,
+  .schedule-row:hover .card-shine { opacity: 1; }
+
+  /* ── Schedule row ── */
+  .schedule-row {
+    display: flex; align-items: center; gap: 20px;
+    padding: 20px 24px;
+    background: #fff;
+    border-radius: 20px;
+    border: 1.5px solid rgba(0,38,27,0.07);
+    transition: transform 0.3s cubic-bezier(0.34,1.56,0.64,1), box-shadow 0.3s ease, border-color 0.2s;
+    position: relative; overflow: hidden;
+  }
+  .schedule-row:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 16px 40px rgba(0,38,27,0.1);
+    border-color: rgba(159,247,0,0.25);
+  }
+
+  /* ── Buttons ── */
+  .btn-lime {
+    display: inline-flex; align-items: center; gap: 7px;
+    padding: 12px 26px; border-radius: 99px;
+    font-family: 'Poppins', sans-serif; font-weight: 700; font-size: 0.88rem;
+    background: #9ff700; color: #00261b; border: none; cursor: pointer;
+    transition: transform 0.2s cubic-bezier(0.34,1.56,0.64,1), box-shadow 0.2s;
+    box-shadow: 0 4px 18px rgba(159,247,0,0.4); text-decoration: none;
+  }
+  .btn-lime:hover { transform: translateY(-2px) scale(1.03); box-shadow: 0 8px 28px rgba(159,247,0,0.6); }
+  .btn-glass {
+    display: inline-flex; align-items: center; gap: 7px;
+    padding: 12px 26px; border-radius: 99px;
+    font-family: 'Poppins', sans-serif; font-weight: 700; font-size: 0.88rem;
+    background: rgba(255,255,255,0.1); color: #fff;
+    border: 1px solid rgba(255,255,255,0.2); cursor: pointer;
+    backdrop-filter: blur(8px); transition: background 0.2s, transform 0.2s; text-decoration: none;
+  }
+  .btn-glass:hover { background: rgba(255,255,255,0.18); transform: translateY(-2px); }
+  .btn-outline {
+    display: inline-flex; align-items: center; gap: 7px;
+    padding: 10px 22px; border-radius: 99px;
+    font-family: 'Poppins', sans-serif; font-weight: 600; font-size: 0.82rem;
+    background: transparent; color: #00261b;
+    border: 1.5px solid rgba(0,38,27,0.18); cursor: pointer; transition: all 0.2s; text-decoration: none;
+  }
+  .btn-outline:hover { border-color: #9ff700; color: #416900; background: rgba(159,247,0,0.06); }
+
+  /* ── Section title ── */
+  .section-title {
+    font-family: 'Poppins', sans-serif; font-weight: 800;
+    font-size: clamp(1.3rem, 3vw, 1.8rem); color: #00261b;
+    position: relative; display: inline-block;
+  }
+  .section-title::after {
+    content: ''; position: absolute; left: 0; bottom: -4px;
+    width: 36px; height: 3px; border-radius: 99px; background: #9ff700;
+  }
+
+  /* ── Pill badge ── */
+  .pill-badge {
+    display: inline-flex; align-items: center; gap: 6px;
+    font-family: 'Poppins', sans-serif; font-size: 10px; font-weight: 700;
+    letter-spacing: 0.09em; text-transform: uppercase;
+    padding: 5px 13px; border-radius: 99px;
+  }
+
+  /* ── Floating deco ── */
+  .cross-deco {
+    font-family: 'Material Symbols Outlined';
+    font-variation-settings: 'FILL' 0, 'wght' 200;
+    position: absolute; color: rgba(159,247,0,0.07);
+    animation: float 7s ease-in-out infinite;
+    pointer-events: none; user-select: none;
+  }
+
+  /* ── Empty state ── */
+  .empty-state {
+    text-align: center; padding: 80px 24px;
+    background: #fff; border-radius: 28px;
+    border: 1.5px dashed rgba(159,247,0,0.3);
+  }
+
+  /* ── Reveal ── */
+  .sp-reveal {
+    opacity: 0; transform: translateY(28px);
+    transition: opacity 0.6s ease, transform 0.6s ease;
+  }
+  .sp-reveal.visible { opacity: 1; transform: translateY(0); }
+
+  /* ── Canvas particle ── */
+  .particle-canvas {
+    position: absolute; inset: 0; width: 100%; height: 100%;
+    z-index: 0; pointer-events: none; border-radius: inherit;
+  }
+
+  /* ── Scrollbar ── */
+  ::-webkit-scrollbar { width: 6px; }
+  ::-webkit-scrollbar-thumb { background: rgba(159,247,0,0.35); border-radius: 99px; }
+
+  /* ── Stat chip ── */
+  .stat-chip {
+    display: inline-flex; align-items: center; gap: 5px;
+    padding: 5px 12px; border-radius: 99px; font-size: 0.78rem; font-weight: 600;
+    background: rgba(255,255,255,0.08); color: rgba(255,255,255,0.65);
+    border: 1px solid rgba(255,255,255,0.08);
+  }
+
+  /* ── Date chip ── */
+  .date-chip {
+    min-width: 62px;
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    padding: 10px 12px; border-radius: 14px;
+    background: rgba(159,247,0,0.08); border: 1px solid rgba(159,247,0,0.15);
+  }
+
+/* ── Responsive Media Queries ── */
+@media (max-width: 768px) {
+  .live-hero {
+    padding: 36px 24px;
+    min-height: 400px;
+  }
+  
+  .hero-orb {
+    width: 300px;
+    height: 300px;
+  }
+  
+  .platform-card {
+    padding: 16px 8px;
+  }
+  
+  .icon-wrap {
+    width: 44px;
+    height: 44px;
+  }
+  
+  .stream-card {
+    padding: 20px;
+  }
+  
+  .schedule-row {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 12px;
+    padding: 16px;
+  }
+  
+  .date-chip {
+    min-width: 50px;
+    padding: 8px 10px;
+  }
+  
+  .cta-wrap {
+    padding: 40px 24px;
+  }
+  
+  .btn-lime, .btn-glass, .btn-outline {
+    width: 100%;
+    justify-content: center;
+  }
+}
+
+@media (max-width: 480px) {
+  .live-hero {
+    padding: 24px 16px;
+    min-height: 350px;
+  }
+  
+  .hero-orb {
+    width: 200px;
+    height: 200px;
+  }
+  
+  .section-title {
+    font-size: 1.25rem;
+  }
+  
+  .platform-card {
+    padding: 12px 6px;
+  }
+  
+  .icon-wrap {
+    width: 40px;
+    height: 40px;
+  }
+  
+  .stream-card {
+    padding: 16px;
+  }
+  
+  .waveform {
+    height: 24px;
+  }
+  
+  .waveform span {
+    width: 2px;
+  }
+  
+  .modal-box {
+    padding: 24px;
+    margin: 16px;
+  }
+}
+</style>
+
+<main class="max-w-[1200px] mx-auto px-4 md:px-8 py-10">
+
+  <!-- ══════════════════════════════════════════
+       HERO BANNER
+  ══════════════════════════════════════════ -->
+  <header class="live-hero grain sp-reveal" aria-label="En-tête Émissions Live">
+
+    <!-- Atmospheric orbs -->
+    <div class="hero-orb" style="width:500px;height:500px;top:-150px;right:-80px;animation:orbDrift 14s ease-in-out infinite;"></div>
+    <div class="hero-orb" style="width:300px;height:300px;bottom:-80px;left:-60px;animation:orbDrift 18s ease-in-out 4s infinite reverse;background:radial-gradient(circle,rgba(20,80,61,0.5) 0%,transparent 70%);"></div>
+
+    <!-- Floating crosses -->
+    <span class="cross-deco" style="font-size:90px;top:10px;right:48px;animation-delay:0s">church</span>
+    <span class="cross-deco" style="font-size:44px;bottom:24px;right:28%;animation-delay:1.8s;opacity:0.05">church</span>
+    <span class="cross-deco" style="font-size:28px;top:38%;left:52%;animation-delay:3.2s;opacity:0.04">church</span>
+
+    <!-- Particle canvas for hero -->
+    <canvas id="hero-canvas" class="particle-canvas" aria-hidden="true"></canvas>
+
+    <!-- Mouse glow -->
+    <div id="hero-glow" style="position:absolute;inset:0;z-index:2;pointer-events:none;
+      background:radial-gradient(circle 200px at var(--mx,50%) var(--my,50%),rgba(159,247,0,0.07) 0%,transparent 100%);
+      opacity:0;transition:opacity 0.4s;border-radius:inherit;"></div>
+
+    <!-- Content -->
+    <div class="relative z-10">
+      <div class="pill-badge mb-5" style="background:rgba(239,68,68,0.15);color:#f87171;border:1px solid rgba(239,68,68,0.25)">
+        <span class="live-dot"></span>ÉMISSIONS LIVE
+      </div>
+      <h1 class="font-extrabold text-white mb-3 leading-tight" style="font-size:clamp(2rem,5vw,3rem)">
+        Rejoignez nos lives<br>
+        <span style="color:#9ff700">en temps réel</span>
+      </h1>
+      <p class="mb-6 max-w-lg" style="color:rgba(255,255,255,0.55);font-size:0.95rem;line-height:1.7">
+        Prédications, louanges et enseignements en direct sur toutes vos plateformes favorites.
+      </p>
+      <!-- Waveform -->
+      <div class="waveform">
+        <span></span><span></span><span></span><span></span>
+        <span></span><span></span><span></span><span></span>
+      </div>
+    </div>
+  </header>
+
+  <!-- ══════════════════════════════════════════
+       PANNEAU ADMIN — lancer un live (superuser uniquement)
+  ══════════════════════════════════════════ -->
+  {% if user.is_superuser %}
+  <section class="sp-reveal mb-10">
+    <div style="background:linear-gradient(135deg,#001a2e 0%,#002d4a 100%);border-radius:24px;border:1px solid rgba(56,189,248,.2);padding:28px 32px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:20px">
+      <div style="display:flex;align-items:center;gap:14px">
+        <div style="width:52px;height:52px;border-radius:16px;background:rgba(56,189,248,.15);border:1px solid rgba(56,189,248,.3);display:flex;align-items:center;justify-content:center;flex-shrink:0">
+          <span class="material-symbols-outlined" style="font-size:26px;color:#38bdf8;font-variation-settings:'FILL' 1">sensors</span>
+        </div>
+        <div>
+          <p style="font-weight:800;font-size:1rem;color:#fff;font-family:'Poppins',sans-serif;margin-bottom:3px">Lancer un Live sur ce site</p>
+          <p style="font-size:.8rem;color:rgba(255,255,255,.45)">Diffusez directement sans YouTube ni TikTok — vos visiteurs regardent ici.</p>
+        </div>
+      </div>
+      <div style="display:flex;gap:10px;flex-wrap:wrap">
+        <button onclick="startAudioLive()" id="btn-audio-live"
+          style="display:inline-flex;align-items:center;gap:7px;padding:12px 22px;border-radius:99px;border:none;background:#9ff700;color:#001a2e;font-weight:800;font-size:.85rem;cursor:pointer;font-family:'Poppins',sans-serif;box-shadow:0 0 24px rgba(159,247,0,.3)">
+          <span class="material-symbols-outlined" style="font-size:18px;font-variation-settings:'FILL' 1">mic</span>
+          Live Audio (micro)
+        </button>
+        <a href="{% url 'studio_live' %}"
+          style="display:inline-flex;align-items:center;gap:7px;padding:12px 22px;border-radius:99px;background:rgba(56,189,248,.12);border:1px solid rgba(56,189,248,.3);color:#38bdf8;font-weight:800;font-size:.85rem;text-decoration:none;font-family:'Poppins',sans-serif">
+          <span class="material-symbols-outlined" style="font-size:18px;font-variation-settings:'FILL' 1">videocam</span>
+          Live Vidéo (studio)
+        </a>
+      </div>
+    </div>
+  </section>
+
+  <!-- ── Panneau live audio inline ── -->
+  <div id="audio-live-panel" style="display:none;margin-bottom:2.5rem">
+    <div style="background:linear-gradient(145deg,#00150f,#00261b);border-radius:24px;border:1px solid rgba(159,247,0,.2);overflow:hidden">
+      <!-- Header -->
+      <div style="display:flex;align-items:center;justify-content:space-between;padding:16px 24px;border-bottom:1px solid rgba(255,255,255,.06)">
+        <div style="display:flex;align-items:center;gap:10px">
+          <span class="live-dot" id="alp-dot" style="display:none"></span>
+          <span style="font-weight:800;color:#fff;font-size:.9rem;font-family:'Poppins',sans-serif" id="alp-status">Prêt à diffuser</span>
+        </div>
+        <button onclick="stopAudioLive()" style="display:inline-flex;align-items:center;gap:5px;padding:7px 16px;border-radius:99px;border:1px solid rgba(255,68,85,.3);background:rgba(255,68,85,.1);color:#ff4455;font-weight:700;font-size:.78rem;cursor:pointer;font-family:'Poppins',sans-serif" id="alp-stop-btn">
+          <span class="material-symbols-outlined" style="font-size:15px">stop_circle</span>Arrêter
+        </button>
+      </div>
+      <!-- Corps -->
+      <div style="padding:24px 24px 20px;display:flex;align-items:center;gap:20px;flex-wrap:wrap">
+        <!-- VU meter -->
+        <div id="alp-vu" style="display:flex;gap:2px;align-items:flex-end;height:40px">
+          {% for i in "12345678901234567890" %}<div style="width:4px;background:#9ff700;border-radius:2px;height:4px;transition:height .05s"></div>{% endfor %}
+        </div>
+        <div>
+          <p style="font-size:.85rem;color:rgba(255,255,255,.6);margin-bottom:6px">Parlez dans votre micro — vos auditeurs vous entendent en direct.</p>
+          <div style="display:flex;align-items:center;gap:6px;font-size:.75rem;color:rgba(255,255,255,.35)">
+            <span id="alp-timer" style="font-family:monospace;font-size:.9rem;color:#9ff700;font-weight:900">00:00</span>
+            <span>·</span>
+            <span id="alp-listeners">0 auditeur(s)</span>
+          </div>
+        </div>
+      </div>
     </div>
   </div>
+  {% endif %}
 
-  <!-- Plateformes -->
-  <div class="grid grid-cols-2 md:grid-cols-5 gap-4 mb-12">
-    {% for platform, label, icon, color in platforms %}
-    <div class="flex flex-col items-center gap-2 p-4 bg-surface-container-low rounded-[20px] border border-slate-100 hover:shadow-md transition-all cursor-pointer group">
-      <div class="w-12 h-12 rounded-xl flex items-center justify-center group-hover:scale-110 transition-transform text-2xl" style="background:{{ color }}">{{ icon }}</div>
-      <span class="font-label-md text-on-surface text-sm">{{ label }}</span>
-    </div>
-    {% empty %}
-    {% for platform_info in platform_list %}
-    <div class="flex flex-col items-center gap-2 p-4 bg-surface-container-low rounded-[20px] border border-slate-100 hover:shadow-md transition-all cursor-pointer group">
-      <div class="w-12 h-12 rounded-xl flex items-center justify-center text-2xl group-hover:scale-110 transition-transform bg-primary">
-        <span class="material-symbols-outlined text-white text-[22px]">{{ platform_info.icon }}</span>
-      </div>
-      <span class="font-label-md text-on-surface text-sm">{{ platform_info.name }}</span>
-    </div>
-    {% endfor %}
-    <!-- Fallback statique -->
-    <div class="flex flex-col items-center gap-2 p-4 bg-surface-container-low rounded-[20px] border border-slate-100 hover:shadow-md transition-all cursor-pointer group">
-      <div class="w-12 h-12 rounded-xl flex items-center justify-center text-2xl group-hover:scale-110 transition-transform" style="background:#FF0000">
-        <span class="material-symbols-outlined text-white">live_tv</span>
-      </div>
-      <span class="font-label-md text-on-surface text-sm">YouTube</span>
-    </div>
-    <div class="flex flex-col items-center gap-2 p-4 bg-surface-container-low rounded-[20px] border border-slate-100 hover:shadow-md transition-all cursor-pointer group">
-      <div class="w-12 h-12 rounded-xl flex items-center justify-center text-2xl group-hover:scale-110 transition-transform" style="background:#1877F2">📘</div>
-      <span class="font-label-md text-on-surface text-sm">Facebook</span>
-    </div>
-    <div class="flex flex-col items-center gap-2 p-4 bg-surface-container-low rounded-[20px] border border-slate-100 hover:shadow-md transition-all cursor-pointer group">
-      <div class="w-12 h-12 rounded-xl flex items-center justify-center text-2xl group-hover:scale-110 transition-transform" style="background:#000000">
-        <span class="material-symbols-outlined text-white">music_note</span>
-      </div>
-      <span class="font-label-md text-on-surface text-sm">TikTok</span>
-    </div>
-    <div class="flex flex-col items-center gap-2 p-4 bg-surface-container-low rounded-[20px] border border-slate-100 hover:shadow-md transition-all cursor-pointer group">
-      <div class="w-12 h-12 rounded-xl flex items-center justify-center text-2xl group-hover:scale-110 transition-transform" style="background:#E4405F">
-        <span class="material-symbols-outlined text-white">photo_camera</span>
-      </div>
-      <span class="font-label-md text-on-surface text-sm">Instagram</span>
-    </div>
-    <div class="flex flex-col items-center gap-2 p-4 bg-surface-container-low rounded-[20px] border border-slate-100 hover:shadow-md transition-all cursor-pointer group">
-      <div class="w-12 h-12 rounded-xl flex items-center justify-center text-2xl group-hover:scale-110 transition-transform" style="background:#1DB954">
-        <span class="material-symbols-outlined text-white">music_note</span>
-      </div>
-      <span class="font-label-md text-on-surface text-sm">Spotify</span>
-    </div>
-    {% endfor %}
-  </div>
+  <!-- ══════════════════════════════════════════
+       LIVE NATIF — diffusion directe sur le site
+  ══════════════════════════════════════════ -->
+  <section id="native-live-section" style="display:none;margin-bottom:3rem" class="sp-reveal">
+    <div style="background:linear-gradient(145deg,#00150f,#00261b);border-radius:28px;overflow:hidden;border:1px solid rgba(159,247,0,0.15);box-shadow:0 24px 60px rgba(0,0,0,0.35)">
 
-  <!-- Lives actuels -->
+      <!-- Header -->
+      <div style="display:flex;align-items:center;justify-content:space-between;padding:18px 24px;border-bottom:1px solid rgba(255,255,255,0.06)">
+        <div style="display:flex;align-items:center;gap:10px">
+          <span class="live-dot" style="width:10px;height:10px;flex-shrink:0"></span>
+          <span style="font-family:'Poppins',sans-serif;font-weight:800;font-size:0.9rem;color:#fff;letter-spacing:.03em">EN DIRECT SUR SAFEPLACE</span>
+        </div>
+        <span id="native-live-title" style="font-size:0.8rem;color:rgba(255,255,255,0.45)"></span>
+      </div>
+
+      <!-- Player -->
+      <div style="position:relative;width:100%;aspect-ratio:16/9;background:#000">
+        <video id="native-live-video"
+               autoplay playsinline muted
+               style="width:100%;height:100%;display:block;object-fit:contain;background:#000">
+        </video>
+
+        <!-- Overlay chargement -->
+        <div id="native-live-overlay" style="position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;background:rgba(0,0,0,0.7)">
+          <div style="width:52px;height:52px;border-radius:50%;border:3px solid rgba(159,247,0,0.3);border-top-color:#9ff700;animation:spin 1s linear infinite"></div>
+          <p style="color:rgba(255,255,255,0.6);font-size:0.85rem;font-family:'Poppins',sans-serif">Connexion au live…</p>
+        </div>
+
+        <!-- Bouton activer le son -->
+        <button id="native-unmute-btn" onclick="nativeLiveUnmute()" style="display:none;position:absolute;bottom:20px;left:50%;transform:translateX(-50%);background:#9ff700;color:#00261b;border:none;padding:10px 22px;border-radius:99px;font-weight:800;cursor:pointer;font-size:.85rem;z-index:10;box-shadow:0 4px 20px rgba(159,247,0,.4)">
+          🔊 Activer le son
+        </button>
+      </div>
+
+      <!-- Footer -->
+      <div style="padding:14px 24px;display:flex;align-items:center;gap:16px;border-top:1px solid rgba(255,255,255,0.06)">
+        <div class="waveform" style="height:20px">
+          <span></span><span></span><span></span><span></span>
+          <span></span><span></span><span></span><span></span>
+        </div>
+        <span style="font-size:0.75rem;color:rgba(255,255,255,0.35);font-family:'Poppins',sans-serif">Diffusion en direct · latence ~1-2s</span>
+        <span id="native-live-viewers" style="margin-left:auto;font-size:0.75rem;color:rgba(255,255,255,0.35);display:flex;align-items:center;gap:5px">
+          <span class="material-symbols-outlined" style="font-size:15px;color:#9ff700">visibility</span>
+          <span id="native-viewers-count">—</span> spectateurs
+        </span>
+      </div>
+    </div>
+  </section>
+
+  <style>
+  @keyframes spin { to { transform: rotate(360deg); } }
+  </style>
+
+  <!-- ══════════════════════════════════════════
+       PLATEFORMES
+  ══════════════════════════════════════════ -->
+  <section class="sp-reveal mb-14" aria-labelledby="platforms-title">
+    <div class="flex items-center justify-between mb-6">
+      <h2 id="platforms-title" class="section-title">Nos Plateformes</h2>
+    </div>
+    <div class="grid grid-cols-2 md:grid-cols-5 gap-4">
+
+      {% for platform, label, icon, color in platforms %}
+      <div class="platform-card">
+        <div class="icon-wrap platform-icon" data-bg-color="{{ color }}">
+          <span class="material-symbols-outlined text-white text-[22px]">{{ icon }}</span>
+        </div>
+        <span class="text-sm font-semibold" style="color:#00261b">{{ label }}</span>
+      </div>
+      {% empty %}
+
+      <!-- YouTube -->
+      <div class="platform-card" aria-label="YouTube">
+        <div class="icon-wrap" style="background:#FF0000">
+          <span class="material-symbols-outlined text-white text-[22px]">live_tv</span>
+        </div>
+        <span class="text-sm font-semibold" style="color:#00261b">YouTube</span>
+      </div>
+
+      <!-- Facebook -->
+      <div class="platform-card" aria-label="Facebook">
+        <div class="icon-wrap" style="background:#1877F2">
+          <span class="material-symbols-outlined text-white text-[22px]">group</span>
+        </div>
+        <span class="text-sm font-semibold" style="color:#00261b">Facebook</span>
+      </div>
+
+      <!-- TikTok -->
+      <div class="platform-card" aria-label="TikTok">
+        <div class="icon-wrap" style="background:#010101">
+          <span class="material-symbols-outlined text-white text-[22px]">music_video</span>
+        </div>
+        <span class="text-sm font-semibold" style="color:#00261b">TikTok</span>
+      </div>
+
+      <!-- Instagram -->
+      <div class="platform-card" aria-label="Instagram">
+        <div class="icon-wrap" style="background:linear-gradient(135deg,#f09433,#e6683c,#dc2743,#cc2366,#bc1888)">
+          <span class="material-symbols-outlined text-white text-[22px]">photo_camera</span>
+        </div>
+        <span class="text-sm font-semibold" style="color:#00261b">Instagram</span>
+      </div>
+
+      {% endfor %}
+    </div>
+  </section>
+
+  <!-- ══════════════════════════════════════════
+       EN DIRECT MAINTENANT
+  ══════════════════════════════════════════ -->
   {% if streams %}
-  <section class="mb-12 sp-fade-in">
+  <section class="mb-14 sp-reveal" aria-labelledby="live-now-title">
     <div class="flex items-center gap-3 mb-6">
-      <div class="sp-live-ring">
-        <span class="w-3 h-3 rounded-full bg-red-500"></span>
-      </div>
-      <h2 class="font-headline-lg text-primary text-2xl">En Direct Maintenant</h2>
+      <div class="live-dot" style="width:11px;height:11px"></div>
+      <h2 id="live-now-title" class="section-title" style="margin-bottom:0">En Direct Maintenant</h2>
     </div>
-    <div class="grid grid-cols-1 md:grid-cols-2 gap-gutter">
+
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
       {% for stream in streams %}
-      <div class="relative bg-primary rounded-[24px] overflow-hidden shadow-xl group hover:shadow-2xl transition-all sp-3d-card">
-        <div class="absolute inset-0 opacity-10"><span class="absolute text-white text-9xl font-bold top-2 right-4 material-symbols-outlined">church</span></div>
-        <!-- Orbe animé -->
-        <div class="sp-orb sp-orb--lime sp-orb--animated absolute -top-10 -right-10 w-40 h-40 rounded-full opacity-10"></div>
-        <div class="relative z-10 p-8">
-          <div class="flex items-center justify-between mb-4">
-            <div class="sp-live-badge sp-live-badge--red">
-              <span class="sp-live-badge__dot"></span>
+      <div class="stream-card">
+
+        <!-- Particle canvas per stream card -->
+        <canvas class="particle-canvas stream-particle-canvas" aria-hidden="true"></canvas>
+
+        <!-- Atmospheric elements -->
+        <div style="position:absolute;width:280px;height:280px;border-radius:50%;top:-80px;right:-60px;
+          background:radial-gradient(circle,rgba(159,247,0,0.08) 0%,transparent 70%);
+          animation:orbDrift 12s ease-in-out infinite;pointer-events:none;z-index:1;"></div>
+
+        <!-- Deco cross -->
+        <span class="cross-deco" style="font-size:70px;top:8px;right:16px;animation-delay:0.5s">church</span>
+
+        <div class="card-shine"></div>
+
+        <!-- Content -->
+        <div class="relative z-10 p-7">
+          <div class="flex items-center justify-between mb-5">
+            <div class="pill-badge" style="background:rgba(239,68,68,0.18);color:#f87171;border:1px solid rgba(239,68,68,0.25)">
+              <span class="live-dot" style="width:7px;height:7px;background:#ef4444;box-shadow:0 0 6px rgba(239,68,68,0.8)"></span>
               LIVE
             </div>
-            <span class="text-white/60 text-sm">{{ stream.get_platform_display }}</span>
+            <div class="stat-chip">
+              <span class="material-symbols-outlined text-[13px]" style="color:#9ff700">sensors</span>
+              {{ stream.get_platform_display }}
+            </div>
           </div>
-          <h3 class="font-headline-md text-white text-xl mb-2">{{ stream.title }}</h3>
-          <p class="text-white/70 text-sm mb-6">{{ stream.description|truncatewords:15 }}</p>
+
+          <h3 class="font-bold text-white text-xl mb-2 leading-snug" style="font-family:'Poppins',sans-serif">{{ stream.title }}</h3>
+          <p class="text-sm mb-6" style="color:rgba(255,255,255,0.5);line-height:1.65">{{ stream.description|truncatewords:18 }}</p>
+
           <!-- Waveform -->
-          <div class="sp-waveform sp-waveform--sm mb-4">
-            <div class="sp-waveform__bar" style="background:rgba(159,247,0,0.6)"></div>
-            <div class="sp-waveform__bar" style="background:rgba(159,247,0,0.6)"></div>
-            <div class="sp-waveform__bar" style="background:rgba(159,247,0,0.6)"></div>
-            <div class="sp-waveform__bar" style="background:rgba(159,247,0,0.6)"></div>
-            <div class="sp-waveform__bar" style="background:rgba(159,247,0,0.6)"></div>
-            <div class="sp-waveform__bar" style="background:rgba(159,247,0,0.6)"></div>
-            <div class="sp-waveform__bar" style="background:rgba(159,247,0,0.6)"></div>
-            <div class="sp-waveform__bar" style="background:rgba(159,247,0,0.6)"></div>
+          <div class="waveform mb-6">
+            <span></span><span></span><span></span><span></span>
+            <span></span><span></span><span></span><span></span>
           </div>
-          <div class="flex items-center justify-between">
-            <span class="text-white/60 text-sm flex items-center gap-1">
-              <span class="material-symbols-outlined text-[16px]">visibility</span>{{ stream.viewers_count }} spectateurs
-            </span>
-            {% if stream.stream_url %}
-            <a href="{{ stream.stream_url }}" target="_blank" class="sp-btn sp-btn--secondary">Rejoindre →</a>
+
+          <div class="flex items-center justify-between flex-wrap gap-3">
+            <div class="stat-chip">
+              <span class="material-symbols-outlined text-[13px]" style="color:#9ff700;font-variation-settings:'FILL' 1">visibility</span>
+              {{ stream.viewers_count|default:"0" }} spectateurs
+            </div>
+            {% if stream.embed_url %}
+              <div class="video-wrapper" style="width:100%;aspect-ratio:16/9;border-radius:16px;overflow:hidden;background:#000;">
+                <iframe
+                  src="{{ stream.embed_url }}"
+                  title="{{ stream.title }}"
+                  style="width:100%;height:100%;border:0;"
+                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                  allowfullscreen>
+                </iframe>
+              </div>
+              <div class="mt-4">
+                <a href="{{ stream.stream_url|default:stream.embed_url }}" target="_blank" rel="noopener" class="btn-outline">
+                  <span class="material-symbols-outlined text-[15px]">open_in_new</span>
+                  Ouvrir sur la plateforme
+                </a>
+              </div>
+            {% elif stream.stream_url %}
+              <a href="{{ stream.stream_url }}" target="_blank" rel="noopener" class="btn-lime">
+                <span class="material-symbols-outlined text-[16px]">sensors</span>
+                Rejoindre le live
+              </a>
+            {% else %}
+              <a href="{% url 'live' %}" class="btn-lime">
+                <span class="material-symbols-outlined text-[16px]">sensors</span>
+                Rejoindre
+              </a>
             {% endif %}
           </div>
         </div>
-        <div class="sp-3d-card__shine"></div>
       </div>
       {% endfor %}
     </div>
   </section>
   {% endif %}
 
-  <!-- Programmation -->
+  <!-- ══════════════════════════════════════════
+       PROCHAINS LIVES (PROGRAMMATION)
+  ══════════════════════════════════════════ -->
   {% if scheduled %}
-  <section class="sp-fade-in">
-    <h2 class="font-headline-lg text-primary text-2xl mb-6">Prochains Lives</h2>
+  <section class="mb-14 sp-reveal" aria-labelledby="scheduled-title">
+    <div class="flex items-center justify-between mb-6 flex-wrap gap-4">
+      <h2 id="scheduled-title" class="section-title">Prochains Lives</h2>
+      <a href="{% url 'contact' %}" class="btn-outline" style="font-size:0.8rem;padding:9px 18px">
+        <span class="material-symbols-outlined text-[15px]">notifications</span>
+        Activer les rappels
+      </a>
+    </div>
+
     <div class="space-y-4">
       {% for stream in scheduled %}
-      <div class="flex items-center gap-5 p-5 bg-surface-container-low rounded-[20px] border border-slate-100 hover:shadow-md transition-all sp-hover-lift">
-        <div class="w-16 h-16 rounded-xl flex items-center justify-center text-white text-2xl shrink-0" style="background:linear-gradient(135deg,#00261b,#416900)">
-          <span class="material-symbols-outlined text-4xl">church</span>
+      <div class="schedule-row">
+        <div class="card-shine"></div>
+
+        <!-- Date chip -->
+        <div class="date-chip flex-shrink-0">
+          {% if stream.scheduled_at %}
+          <span class="font-bold text-lg leading-none" style="color:#00261b">{{ stream.scheduled_at|date:"d" }}</span>
+          <span class="text-xs font-semibold uppercase" style="color:#416900;letter-spacing:0.06em">{{ stream.scheduled_at|date:"M" }}</span>
+          {% else %}
+          <span class="material-symbols-outlined text-[22px]" style="color:#9ff700">event</span>
+          {% endif %}
         </div>
-        <div class="flex-1">
-          <h3 class="font-headline-md text-primary text-lg">{{ stream.title }}</h3>
-          <p class="text-on-surface-variant text-sm">{{ stream.get_platform_display }}{% if stream.scheduled_at %} · {{ stream.scheduled_at|date:"d M Y à H:i" }}{% endif %}</p>
+
+        <!-- Icon -->
+        <div class="w-14 h-14 rounded-2xl flex items-center justify-center flex-shrink-0"
+          style="background:linear-gradient(135deg,#00261b,#416900)">
+          <span class="material-symbols-outlined text-white text-[22px]">church</span>
         </div>
-        <button class="sp-btn sp-btn--outline">Me rappeler</button>
+
+        <!-- Info -->
+        <div class="flex-1 min-w-0">
+          <h3 class="font-bold text-base leading-snug mb-1" style="color:#00261b;font-family:'Poppins',sans-serif">{{ stream.title }}</h3>
+          <div class="flex items-center gap-3 flex-wrap">
+            <span class="flex items-center gap-1 text-xs font-medium" style="color:rgba(0,38,27,0.5)">
+              <span class="material-symbols-outlined text-[14px]" style="color:#9ff700;font-variation-settings:'FILL' 1">sensors</span>
+              {{ stream.get_platform_display }}
+            </span>
+            {% if stream.scheduled_at %}
+            <span class="flex items-center gap-1 text-xs font-medium" style="color:rgba(0,38,27,0.5)">
+              <span class="material-symbols-outlined text-[14px]">schedule</span>
+              {{ stream.scheduled_at|date:"d M Y à H:i" }}
+            </span>
+            {% endif %}
+          </div>
+        </div>
+
+        <!-- Action -->
+        <button type="button" class="btn-outline flex-shrink-0 js-reminder-btn" data-title="{{ stream.title }}"
+          style="font-size:0.78rem;padding:9px 18px">
+          <span class="material-symbols-outlined text-[15px]">notifications</span>
+          Me rappeler
+        </button>
       </div>
       {% endfor %}
     </div>
   </section>
   {% endif %}
 
+  <!-- ══════════════════════════════════════════
+       ÉTAT VIDE
+  ══════════════════════════════════════════ -->
   {% if not streams and not scheduled %}
-  <div class="sp-empty">
-    <div class="sp-empty__icon" style="background:var(--sp-primary)">
-      <span class="material-symbols-outlined text-6xl text-white">church</span>
+  <div class="empty-state sp-reveal">
+    <div class="w-20 h-20 rounded-3xl flex items-center justify-center mx-auto mb-5"
+      style="background:linear-gradient(135deg,#00261b,#416900)">
+      <span class="material-symbols-outlined text-white text-4xl">sensors_off</span>
     </div>
-    <h3 class="sp-empty__title">Pas de live pour le moment</h3>
-    <p class="sp-empty__desc">Suivez-nous sur nos réseaux sociaux pour être notifié de nos prochains lives.</p>
-    <a href="{% url 'subscriptions' %}" class="sp-btn sp-btn--secondary">Rester informé</a>
+    <h3 class="font-bold text-xl mb-2" style="font-family:'Poppins',sans-serif;color:#00261b">Pas de live pour le moment</h3>
+    <p class="text-sm mb-6 max-w-md mx-auto" style="color:rgba(0,38,27,0.55);line-height:1.7">
+      Suivez-nous sur nos réseaux sociaux et contactez-nous pour être informé de nos prochains lives.
+    </p>
+    <a href="{% url 'contact' %}" class="btn-lime">
+      <span class="material-symbols-outlined text-[16px]">notifications_active</span>
+      Nous contacter
+    </a>
   </div>
   {% endif %}
 
+  <!-- ══════════════════════════════════════════
+       CTA CONTACT
+  ══════════════════════════════════════════ -->
+  <section class="sp-reveal mt-10" aria-label="Contact">
+    <div class="relative overflow-hidden rounded-[28px] grain"
+      style="background:linear-gradient(135deg,#00261b 0%,#0b3d2e 55%,#416900 100%);padding:60px 48px">
+
+      <canvas id="cta-canvas" class="particle-canvas" aria-hidden="true"></canvas>
+
+      <!-- Orbs -->
+      <div style="position:absolute;width:400px;height:400px;border-radius:50%;top:-120px;right:-80px;
+        background:radial-gradient(circle,rgba(159,247,0,0.1) 0%,transparent 70%);
+        animation:orbDrift 15s ease-in-out infinite;pointer-events:none;z-index:1;"></div>
+
+      <!-- Deco crosses -->
+      <span class="cross-deco" style="font-size:90px;bottom:0;right:48px;animation-delay:1s">church</span>
+      <span class="cross-deco" style="font-size:48px;top:20px;left:44%;animation-delay:2.5s;opacity:0.05">church</span>
+
+      <div class="relative z-10 text-center max-w-xl mx-auto">
+        <div class="pill-badge mb-5 mx-auto" style="display:inline-flex;background:rgba(159,247,0,0.12);color:#9ff700;border:1px solid rgba(159,247,0,0.2)">
+          <span class="material-symbols-outlined text-[14px]" style="font-variation-settings:'FILL' 1">volunteer_activism</span>
+          REJOINDRE LA COMMUNAUTÉ
+        </div>
+        <h2 class="font-extrabold text-white mb-3 leading-tight" style="font-size:clamp(1.5rem,4vw,2.2rem)">
+          Ne manquez plus aucun live
+        </h2>
+        <p class="text-sm mb-8" style="color:rgba(255,255,255,0.55);line-height:1.7">
+          Contactez-nous pour recevoir une notification avant chaque émission en direct.
+        </p>
+        <div class="flex flex-wrap gap-4 justify-center">
+          <a href="{% url 'contact' %}" class="btn-lime">
+            <span class="material-symbols-outlined text-[16px]">notifications_active</span>
+            Nous contacter
+          </a>
+          <a href="{% url 'about' %}" class="btn-glass">En savoir plus</a>
+        </div>
+      </div>
+    </div>
+  </section>
+
 </main>
+
+<!-- ══════════════════════════════════════════
+     REMINDER MODAL
+══════════════════════════════════════════ -->
+<div id="reminder-modal" style="display:none;position:fixed;inset:0;z-index:999;align-items:center;justify-content:center;background:rgba(0,0,0,0.65);backdrop-filter:blur(6px)"
+  role="dialog" aria-modal="true" aria-labelledby="rm-title">
+  <div style="background:#fff;border-radius:28px;padding:36px;max-width:400px;width:calc(100% - 32px);box-shadow:0 32px 80px rgba(0,0,0,0.3);animation:fadeUp 0.35s ease">
+    <div class="w-12 h-12 rounded-2xl flex items-center justify-center mb-4" style="background:rgba(159,247,0,0.1)">
+      <span class="material-symbols-outlined" style="color:#9ff700;font-variation-settings:'FILL' 1">notifications_active</span>
+    </div>
+    <h2 id="rm-title" class="font-bold text-xl mb-1" style="font-family:'Poppins',sans-serif;color:#00261b">Me rappeler ce live</h2>
+    <p id="rm-live-title" class="text-sm mb-5" style="color:rgba(0,38,27,0.55)"></p>
+    <div>
+      <label for="rm-email" class="block text-sm font-bold mb-2" style="color:#00261b">Adresse e-mail</label>
+      <input type="email" id="rm-email"
+        style="width:100%;padding:12px 16px;border-radius:12px;border:1.5px solid rgba(0,38,27,0.15);background:#f4f6f0;font-family:'Poppins',sans-serif;font-size:0.88rem;outline:none;color:#00261b;margin-bottom:12px"
+        placeholder="email@exemple.com" autocomplete="email"
+        onfocus="this.style.borderColor='#9ff700'"
+        onblur="this.style.borderColor='rgba(0,38,27,0.15)'">
+      <p id="rm-feedback" class="text-sm mb-3" style="display:none"></p>
+      <div class="flex gap-3">
+        <button id="rm-confirm" type="button" class="btn-lime flex-1 justify-center">Me rappeler</button>
+        <button id="rm-close" type="button"
+          style="flex:1;padding:12px;border-radius:99px;font-family:'Poppins',sans-serif;font-weight:600;font-size:0.88rem;background:transparent;color:#00261b;border:1.5px solid rgba(0,38,27,0.15);cursor:pointer">
+          Annuler
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+
+<script>
+/* ══════════════════════════════════════════
+   PARTICLE ENGINE — reusable
+══════════════════════════════════════════ */
+function createParticles(canvas, opts) {
+  opts = Object.assign({
+    count: 50, mouseRepel: true, maxRepelDist: 110,
+    speed: 1, sizeRange: [1.5, 7],
+    colors: ['rgba(159,247,0,', 'rgba(255,255,255,', 'rgba(100,210,130,'],
+    shapes: ['cross', 'dot', 'circle', 'star'],
+  }, opts);
+
+  const ctx = canvas.getContext('2d');
+  let W, H, dpr;
+  let mx = -9999, my = -9999;
+  const particles = [];
+
+  function resize() {
+    dpr = window.devicePixelRatio || 1;
+    const p = canvas.parentElement;
+    W = p.offsetWidth; H = p.offsetHeight;
+    canvas.width = W * dpr; canvas.height = H * dpr;
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  }
+
+  class P {
+    constructor(boot) { this.reset(boot); }
+    reset(rY) {
+      this.x = Math.random() * W;
+      this.y = rY ? Math.random() * H : H + 8;
+      this.vx = (Math.random() - 0.5) * 0.38 * opts.speed;
+      this.vy = -(Math.random() * 0.5 + 0.15) * opts.speed;
+      this.size = opts.sizeRange[0] + Math.random() * (opts.sizeRange[1] - opts.sizeRange[0]);
+      this.life = 0; this.maxLife = 160 + Math.random() * 220;
+      this.color = opts.colors[Math.floor(Math.random() * opts.colors.length)];
+      this.shape = opts.shapes[Math.floor(Math.random() * opts.shapes.length)];
+      this.rot = Math.random() * Math.PI * 2;
+      this.rotS = (Math.random() - 0.5) * 0.024;
+      this.wob = Math.random() * Math.PI * 2;
+      this.wobS = 0.012 + Math.random() * 0.025;
+    }
+    update() {
+      this.life++; this.wob += this.wobS; this.rot += this.rotS;
+      if (opts.mouseRepel) {
+        const dx = this.x - mx, dy = this.y - my;
+        const d = Math.sqrt(dx*dx + dy*dy);
+        if (d < opts.maxRepelDist && d > 0) {
+          const f = ((opts.maxRepelDist - d) / opts.maxRepelDist) ** 2 * 3;
+          const a = Math.atan2(dy, dx);
+          this.vx += Math.cos(a) * f; this.vy += Math.sin(a) * f;
+        }
+      }
+      this.vx += Math.sin(this.wob) * 0.01;
+      this.vx *= 0.97; this.vy *= 0.984;
+      this.vy -= 0.007 + Math.random() * 0.007;
+      this.x += this.vx; this.y += this.vy;
+      if (this.y < -12 || this.x < -18 || this.x > W+18 || this.life > this.maxLife) this.reset(false);
+    }
+    draw() {
+      const p = this.life / this.maxLife;
+      const alpha = p < 0.12 ? p/0.12 : p > 0.72 ? 1-(p-0.72)/0.28 : 1;
+      const c = this.color + (alpha * 0.78) + ')';
+      ctx.save();
+      ctx.translate(this.x, this.y); ctx.rotate(this.rot); ctx.globalAlpha = alpha;
+      if (this.shape === 'cross') {
+        ctx.strokeStyle = c; ctx.lineWidth = Math.max(0.7, this.size * 0.3); ctx.lineCap = 'round';
+        ctx.beginPath();
+        ctx.moveTo(-this.size, 0); ctx.lineTo(this.size, 0);
+        ctx.moveTo(0, -this.size * 1.35); ctx.lineTo(0, this.size * 1.35);
+        ctx.stroke();
+      } else if (this.shape === 'star') {
+        ctx.fillStyle = c; ctx.beginPath();
+        for (let i=0;i<8;i++){const a=(i/8)*Math.PI*2,r=i%2===0?this.size:this.size*0.42;i===0?ctx.moveTo(Math.cos(a)*r,Math.sin(a)*r):ctx.lineTo(Math.cos(a)*r,Math.sin(a)*r);}
+        ctx.closePath(); ctx.fill();
+      } else if (this.shape === 'circle') {
+        ctx.strokeStyle = c; ctx.lineWidth = Math.max(0.5, this.size * 0.22);
+        ctx.beginPath(); ctx.arc(0, 0, this.size * 0.65, 0, Math.PI * 2); ctx.stroke();
+      } else {
+        ctx.fillStyle = c; ctx.beginPath(); ctx.arc(0, 0, this.size * 0.45, 0, Math.PI * 2); ctx.fill();
+      }
+      ctx.restore();
+    }
+  }
+
+  resize();
+  for (let i = 0; i < opts.count; i++) particles.push(new P(true));
+
+  const parent = canvas.parentElement;
+  if (opts.mouseRepel) {
+    parent.addEventListener('mousemove', e => { const r = parent.getBoundingClientRect(); mx = e.clientX-r.left; my = e.clientY-r.top; });
+    parent.addEventListener('mouseleave', () => { mx = -9999; my = -9999; });
+    parent.addEventListener('touchmove', e => { const r = parent.getBoundingClientRect(); mx = e.touches[0].clientX-r.left; my = e.touches[0].clientY-r.top; }, { passive:true });
+    parent.addEventListener('touchend', () => { mx=-9999; my=-9999; });
+  }
+  window.addEventListener('resize', resize);
+
+  (function loop() {
+    ctx.clearRect(0, 0, W, H);
+    if (opts.mouseRepel && mx > 0) {
+      const g = ctx.createRadialGradient(mx,my,0,mx,my,opts.maxRepelDist);
+      g.addColorStop(0,'rgba(159,247,0,0.04)'); g.addColorStop(1,'transparent');
+      ctx.fillStyle = g; ctx.fillRect(0, 0, W, H);
+    }
+    for (const p of particles) { p.update(); p.draw(); }
+    requestAnimationFrame(loop);
+  })();
+}
+
+/* ── Hero canvas ── */
+const heroCanvas = document.getElementById('hero-canvas');
+if (heroCanvas) {
+  createParticles(heroCanvas, { count: 80, mouseRepel: true, maxRepelDist: 130, speed: 1, sizeRange: [2, 9] });
+}
+
+/* ── Hero mouse glow ── */
+const heroWrap = document.querySelector('.live-hero');
+const heroGlow = document.getElementById('hero-glow');
+if (heroWrap && heroGlow) {
+  heroWrap.addEventListener('mousemove', e => {
+    const r = heroWrap.getBoundingClientRect();
+    heroGlow.style.setProperty('--mx', ((e.clientX-r.left)/r.width*100).toFixed(1)+'%');
+    heroGlow.style.setProperty('--my', ((e.clientY-r.top)/r.height*100).toFixed(1)+'%');
+    heroGlow.style.opacity = '1';
+  });
+  heroWrap.addEventListener('mouseleave', () => { heroGlow.style.opacity = '0'; });
+}
+
+/* ── CTA canvas ── */
+const ctaCanvas = document.getElementById('cta-canvas');
+if (ctaCanvas) {
+  createParticles(ctaCanvas, { count: 45, mouseRepel: false, speed: 0.65, sizeRange: [1.5, 6],
+    shapes: ['cross', 'dot', 'circle'] });
+}
+
+/* ── Stream card canvases ── */
+window.addEventListener('load', () => {
+  document.querySelectorAll('.stream-particle-canvas').forEach((canvas, i) => {
+    createParticles(canvas, {
+      count: 28, mouseRepel: true, maxRepelDist: 85, speed: 0.8,
+      sizeRange: [1, 5], shapes: ['cross', 'dot', 'circle'],
+    });
+  });
+});
+
+/* ══════════════════════════════════════════
+   3D SHINE on stream cards
+══════════════════════════════════════════ */
+document.querySelectorAll('.stream-card').forEach(card => {
+  const shine = card.querySelector('.card-shine');
+  card.addEventListener('mousemove', e => {
+    const r = card.getBoundingClientRect();
+    const x = (e.clientX - r.left) / r.width;
+    const y = (e.clientY - r.top) / r.height;
+    card.style.transform = `perspective(900px) rotateX(${(y-0.5)*8}deg) rotateY(${(x-0.5)*-8}deg) translateY(-6px)`;
+    if (shine) { shine.style.setProperty('--mx', x*100+'%'); shine.style.setProperty('--my', y*100+'%'); }
+  });
+  card.addEventListener('mouseleave', () => { card.style.transform = ''; });
+});
+
+/* ══════════════════════════════════════════
+   PARALLAX CROSSES (hero)
+══════════════════════════════════════════ */
+(function() {
+  const hero = document.querySelector('.live-hero');
+  const crosses = hero ? hero.querySelectorAll('.cross-deco') : [];
+  if (!crosses.length) return;
+  let ticking = false;
+  document.addEventListener('mousemove', e => {
+    if (ticking) return; ticking = true;
+    requestAnimationFrame(() => {
+      const cx = window.innerWidth/2, cy = window.innerHeight/2;
+      const dx = (e.clientX-cx)/cx, dy = (e.clientY-cy)/cy;
+      crosses.forEach((el, i) => {
+        const d = 0.14 + (i%3)*0.1;
+        el.style.transform = `translate(${dx*16*d}px,${dy*16*d}px)`;
+      });
+      ticking = false;
+    });
+  });
+})();
+
+/* ══════════════════════════════════════════
+   SCROLL REVEAL
+══════════════════════════════════════════ */
+(function() {
+  if (!('IntersectionObserver' in window)) {
+    document.querySelectorAll('.sp-reveal').forEach(el => el.classList.add('visible'));
+    return;
+  }
+  const obs = new IntersectionObserver(entries => {
+    entries.forEach((entry, i) => {
+      if (entry.isIntersecting) {
+        entry.target.style.transitionDelay = (i * 0.05) + 's';
+        entry.target.classList.add('visible');
+        obs.unobserve(entry.target);
+      }
+    });
+  }, { threshold: 0.07 });
+  document.querySelectorAll('.sp-reveal').forEach(el => obs.observe(el));
+})();
+
+/* ══════════════════════════════════════════
+   REMINDER MODAL
+══════════════════════════════════════════ */
+(function() {
+  const modal = document.getElementById('reminder-modal');
+  const liveTitle = document.getElementById('rm-live-title');
+  const emailInput = document.getElementById('rm-email');
+  const feedback = document.getElementById('rm-feedback');
+  const confirmBtn = document.getElementById('rm-confirm');
+  const closeBtn = document.getElementById('rm-close');
+  if (!modal) return;
+
+  function open(title) {
+    modal.style.display = 'flex';
+    if (liveTitle) liveTitle.textContent = title || '';
+    if (emailInput) { emailInput.value = ''; setTimeout(() => emailInput.focus(), 60); }
+    if (feedback) { feedback.textContent = ''; feedback.style.display = 'none'; }
+  }
+  function close() { modal.style.display = 'none'; }
+
+  document.addEventListener('click', e => {
+    const btn = e.target.closest('.js-reminder-btn');
+    if (btn) open(btn.dataset.title);
+  });
+  if (closeBtn) closeBtn.addEventListener('click', close);
+  modal.addEventListener('click', e => { if (e.target === modal) close(); });
+  document.addEventListener('keydown', e => { if (e.key === 'Escape') close(); });
+
+  if (confirmBtn) {
+    confirmBtn.addEventListener('click', () => {
+      const email = emailInput ? emailInput.value.trim() : '';
+      if (!email || !email.includes('@')) {
+        feedback.textContent = 'Veuillez entrer une adresse e-mail valide.';
+        feedback.style.color = '#dc2626'; feedback.style.display = 'block';
+        return;
+      }
+      const csrf = document.cookie.match(/csrftoken=([^;]+)/);
+      fetch('{% url "contact" %}', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/x-www-form-urlencoded', 'X-CSRFToken': csrf ? csrf[1] : '' },
+        body: new URLSearchParams({ first_name:'', last_name:'', email,
+          subject:'Rappel Live', message:'Rappel pour : ' + (liveTitle ? liveTitle.textContent : '') }),
+      })
+      .then(() => {
+        feedback.textContent = '✓ Votre demande a bien été envoyée !';
+        feedback.style.color = '#416900'; feedback.style.display = 'block';
+        setTimeout(close, 2000);
+      })
+      .catch(() => {
+        feedback.textContent = 'Une erreur est survenue. Réessayez.';
+        feedback.style.color = '#dc2626'; feedback.style.display = 'block';
+      });
+    });
+  }
+})();
+
+/* ══════════════════════════════════════════════
+   SET CSS VARIABLES FOR PLATFORM ICONS
+══════════════════════════════════════════════ */
+(function() {
+  document.querySelectorAll('.platform-icon').forEach(el => {
+    const color = el.dataset.bgColor;
+    if (color) {
+      el.style.setProperty('--bg-color', color);
+    }
+  });
+})();
+
+/* ═══════════════════════════════════════════════
+   LECTEUR LIVE NATIF — MediaSource Extensions
+══════════════════════════════════════════════ */
+(function() {
+  var API = '/api/v1';
+  var section   = document.getElementById('native-live-section');
+  var videoEl   = document.getElementById('native-live-video');
+  var overlay   = document.getElementById('native-live-overlay');
+  var titleEl   = document.getElementById('native-live-title');
+  var unmuteBtn = document.getElementById('native-unmute-btn');
+  var mseOk     = ('MediaSource' in window);
+
+  function showOverlay(msg) {
+    if (!overlay) return;
+    overlay.style.display = 'flex';
+    var p = overlay.querySelector('p');
+    if (p) p.textContent = msg || 'Connexion au live…';
+  }
+  function hideOverlay() { if (overlay) overlay.style.display = 'none'; }
+
+  window.nativeLiveUnmute = function() {
+    if (videoEl) { videoEl.muted = false; videoEl.volume = 1; }
+    if (unmuteBtn) unmuteBtn.style.display = 'none';
+  };
+
+  function NativePlayer(sid, mimeType) {
+    this.sid = sid; this.mimeType = mimeType;
+    this.ms = null; this.sb = null;
+    this.queue = []; this.busy = false;
+    this.nextSeq = 1; this.alive = true; this.timer = null;
+  }
+
+  NativePlayer.prototype.start = function() {
+    var self = this;
+    if (!mseOk) { showOverlay('Utilisez Chrome ou Firefox pour regarder le live.'); return; }
+    self.ms = new MediaSource();
+    videoEl.src = URL.createObjectURL(self.ms);
+    self.ms.addEventListener('sourceopen', function() {
+      try {
+        self.sb = self.ms.addSourceBuffer(self.mimeType);
+        self.sb.mode = 'sequence';
+        self.sb.addEventListener('updateend', function() {
+          self.busy = false; self._flush();
+          if (videoEl.buffered.length > 0) {
+            var end = videoEl.buffered.end(videoEl.buffered.length - 1);
+            if (end - videoEl.currentTime > 4) videoEl.currentTime = end - 0.5;
+          }
+        });
+      } catch(e) { showOverlay('Erreur lecteur : ' + e.message); return; }
+      self._fetchChunk(0, function(buf) {
+        if (!buf) { showOverlay('Impossible de rejoindre le live.'); return; }
+        self.queue.push(buf); self._flush(); self._poll();
+        videoEl.play().then(hideOverlay).catch(function() {
+          videoEl.muted = true;
+          videoEl.play().then(function() {
+            hideOverlay();
+            if (unmuteBtn) unmuteBtn.style.display = 'block';
+          }).catch(function() {});
+        });
+      });
+    }, { once: true });
+  };
+
+  NativePlayer.prototype._fetchChunk = function(seq, cb) {
+    fetch(API + '/live/native/' + this.sid + '/chunk/' + seq + '/')
+      .then(function(r) { return r.ok ? r.arrayBuffer() : null; })
+      .then(function(b) { cb(b); }).catch(function() { cb(null); });
+  };
+
+  NativePlayer.prototype._flush = function() {
+    if (this.busy || !this.queue.length || !this.sb || this.sb.updating) return;
+    this.busy = true;
+    var buf = this.queue.shift();
+    try { this.sb.appendBuffer(buf); } catch(e) { this.busy = false; }
+  };
+
+  NativePlayer.prototype._poll = function() {
+    var self = this;
+    if (!self.alive) return;
+    fetch(API + '/live/native/' + self.sid + '/poll/?seq=' + self.nextSeq)
+      .then(function(r) { return r.json(); })
+      .then(function(d) {
+        if (!d.active && !(d.available && d.available.length)) { self.stop(); return; }
+        var seqs = (d.available || []).filter(function(s) { return s >= self.nextSeq; });
+        (function next(i) {
+          if (i >= seqs.length) {
+            if (self.alive) self.timer = setTimeout(function() { self._poll(); }, 600);
+            return;
+          }
+          self._fetchChunk(seqs[i], function(buf) {
+            if (buf) { self.queue.push(buf); self._flush(); self.nextSeq = seqs[i] + 1; }
+            next(i + 1);
+          });
+        })(0);
+      })
+      .catch(function() {
+        if (self.alive) self.timer = setTimeout(function() { self._poll(); }, 1500);
+      });
+  };
+
+  NativePlayer.prototype.stop = function() {
+    this.alive = false; clearTimeout(this.timer);
+    try { if (this.ms && this.ms.readyState === 'open') this.ms.endOfStream(); } catch(e) {}
+    showOverlay('Live termin\xe9');
+    setTimeout(checkActive, 5000);
+  };
+
+  var player = null, currentSid = null;
+
+  function checkActive() {
+    fetch(API + '/live/native/active/')
+      .then(function(r) { return r.json(); })
+      .then(function(d) {
+        var streams = d.streams || [];
+        if (!streams.length) {
+          if (currentSid) { if (player) player.alive = false; player = null; currentSid = null; section.style.display = 'none'; }
+          return;
+        }
+        var s = streams[0];
+        if (s.stream_id === currentSid) return;
+        if (player) { player.alive = false; clearTimeout(player.timer); }
+        currentSid = s.stream_id;
+        section.style.display = 'block';
+        if (titleEl) titleEl.textContent = s.title || '';
+        showOverlay('Connexion au live…');
+        videoEl.src = '';
+        player = new NativePlayer(s.stream_id, s.mime_type);
+        player.start();
+      }).catch(function() {});
+  }
+
+  checkActive();
+  setInterval(checkActive, 5000);
+})();
+
+/* ═══════════════════════════════════════════════
+   LIVE AUDIO — mode micro uniquement (admin)
+══════════════════════════════════════════════ */
+(function() {
+  var _mic = null, _recorder = null, _streamId = null;
+  var _timerInterval = null, _listenerInterval = null, _seconds = 0;
+  var _vuBars = null, _analyser = null, _vuAnim = null;
+  var CSRF = document.cookie.match(/csrftoken=([^;]+)/)?.[1] || '';
+
+  function fmt(s) {
+    return String(Math.floor(s/60)).padStart(2,'0') + ':' + String(s%60).padStart(2,'0');
+  }
+
+  function vuTick() {
+    if (!_analyser) return;
+    var buf = new Uint8Array(_analyser.frequencyBinCount);
+    _analyser.getByteFrequencyData(buf);
+    var bars = document.querySelectorAll('#alp-vu div');
+    var step = Math.floor(buf.length / bars.length);
+    bars.forEach(function(b, i) {
+      var v = buf[i * step] / 255;
+      b.style.height = Math.max(4, Math.round(v * 40)) + 'px';
+    });
+    _vuAnim = requestAnimationFrame(vuTick);
+  }
+
+  window.startAudioLive = function() {
+    if (_recorder) return;
+    navigator.mediaDevices.getUserMedia({ audio: true, video: false })
+      .then(function(stream) {
+        _mic = stream;
+        // VU meter
+        try {
+          var ctx = new AudioContext();
+          _analyser = ctx.createAnalyser();
+          _analyser.fftSize = 64;
+          ctx.createMediaStreamSource(stream).connect(_analyser);
+          vuTick();
+        } catch(e) {}
+
+        // Start live session on server
+        fetch('/api/v1/live/native/start/', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'X-CSRFToken': CSRF },
+          body: JSON.stringify({ title: 'Live audio', mime_type: 'audio/webm;codecs=opus' })
+        }).then(function(r) { return r.json(); })
+          .then(function(d) {
+            _streamId = d.stream_id;
+            document.getElementById('alp-status').textContent = 'En direct';
+            document.getElementById('alp-dot').style.display = 'inline-block';
+            document.getElementById('alp-stop-btn').style.display = 'inline-flex';
+            document.getElementById('audio-live-panel').style.display = 'block';
+            document.getElementById('btn-audio-live').style.display = 'none';
+
+            // Chrono
+            _seconds = 0;
+            _timerInterval = setInterval(function() {
+              _seconds++;
+              var el = document.getElementById('alp-timer');
+              if (el) el.textContent = fmt(_seconds);
+            }, 1000);
+
+            // Push chunks
+            var mime = MediaRecorder.isTypeSupported('audio/webm;codecs=opus')
+              ? 'audio/webm;codecs=opus' : 'audio/webm';
+            _recorder = new MediaRecorder(stream, { mimeType: mime });
+            _recorder.ondataavailable = function(e) {
+              if (!e.data || e.data.size === 0 || !_streamId) return;
+              fetch('/api/v1/live/native/' + _streamId + '/push/', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/octet-stream', 'X-CSRFToken': CSRF },
+                body: e.data
+              }).catch(function() {});
+            };
+            _recorder.start(500);
+          }).catch(function(err) {
+            console.error('Erreur démarrage live:', err);
+            alert('Impossible de démarrer le live. Vérifiez votre connexion.');
+            stream.getTracks().forEach(function(t){ t.stop(); });
+          });
+      }).catch(function() {
+        alert('Accès au microphone refusé.');
+      });
+  };
+
+  window.stopAudioLive = function() {
+    if (_recorder) { try { _recorder.stop(); } catch(e) {} _recorder = null; }
+    if (_mic) { _mic.getTracks().forEach(function(t){ t.stop(); }); _mic = null; }
+    if (_vuAnim) { cancelAnimationFrame(_vuAnim); _vuAnim = null; }
+    if (_timerInterval) { clearInterval(_timerInterval); _timerInterval = null; }
+    if (_listenerInterval) { clearInterval(_listenerInterval); _listenerInterval = null; }
+    if (_streamId) {
+      fetch('/api/v1/live/native/' + _streamId + '/stop/', {
+        method: 'POST',
+        headers: { 'X-CSRFToken': CSRF }
+      }).catch(function() {});
+      _streamId = null;
+    }
+    document.getElementById('audio-live-panel').style.display = 'none';
+    document.getElementById('btn-audio-live').style.display = 'inline-flex';
+    document.getElementById('alp-dot').style.display = 'none';
+    document.getElementById('alp-status').textContent = 'Prêt à diffuser';
+    var timer = document.getElementById('alp-timer');
+    if (timer) timer.textContent = '00:00';
+  };
+})();
+
+/* ═══════════════════════════════════════════════
+   PLATFORM CARD — ripple on click
+══════════════════════════════════════════════ */
+document.querySelectorAll('.platform-card').forEach(card => {
+  card.addEventListener('click', function(e) {
+    const ripple = document.createElement('span');
+    const r = card.getBoundingClientRect();
+    const size = Math.max(r.width, r.height) * 1.5;
+    ripple.style.cssText = `
+      position:absolute;width:${size}px;height:${size}px;border-radius:50%;
+      background:rgba(159,247,0,0.15);
+      left:${e.clientX-r.left-size/2}px;top:${e.clientY-r.top-size/2}px;
+      transform:scale(0);animation:rippleAnim 0.5s ease forwards;pointer-events:none;
+    `;
+    card.style.position = 'relative'; card.style.overflow = 'hidden';
+    card.appendChild(ripple);
+    setTimeout(() => ripple.remove(), 500);
+  });
+});
+</script>
+
+<style>
+@keyframes rippleAnim {
+  to { transform: scale(1); opacity: 0; }
+}
+</style>
+
 {% endblock %}

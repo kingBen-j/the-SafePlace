@@ -156,17 +156,17 @@ tailwind.config = {
         <h5 class="font-bold text-on-surface truncate text-sm" id="player-title">The SafePlace by K</h5>
         <p class="text-label-sm text-on-surface-variant truncate" id="player-host">Votre refuge de foi</p>
       </div>
-      <button class="text-on-surface-variant hover:text-secondary transition-colors"><span class="material-symbols-outlined">favorite</span></button>
+      <button id="favorite-btn" class="text-on-surface-variant hover:text-secondary transition-colors" title="J'aime"><span class="material-symbols-outlined" id="fav-icon">favorite</span></button>
     </div>
     <div class="flex flex-col items-center gap-2 w-2/4 max-w-xl">
       <div class="flex items-center gap-6">
-        <button class="text-on-surface-variant hover:text-secondary"><span class="material-symbols-outlined">shuffle</span></button>
-        <button class="text-on-surface-variant hover:text-secondary" id="prev-btn"><span class="material-symbols-outlined">skip_previous</span></button>
+        <button id="shuffle-btn" class="text-on-surface-variant hover:text-secondary transition-colors" title="Aléatoire"><span class="material-symbols-outlined" id="shuffle-icon">shuffle</span></button>
+        <button id="prev-btn" class="text-on-surface-variant hover:text-secondary transition-colors" title="Précédent"><span class="material-symbols-outlined">skip_previous</span></button>
         <button class="bg-primary text-on-primary w-12 h-12 rounded-full flex items-center justify-center hover:scale-105 active:scale-95 transition-all" id="play-pause-btn">
           <span class="material-symbols-outlined" style="font-variation-settings:'FILL' 1" id="play-icon">play_arrow</span>
         </button>
-        <button class="text-on-surface-variant hover:text-secondary" id="next-btn"><span class="material-symbols-outlined">skip_next</span></button>
-        <button class="text-on-surface-variant hover:text-secondary"><span class="material-symbols-outlined">repeat</span></button>
+        <button id="next-btn" class="text-on-surface-variant hover:text-secondary transition-colors" title="Suivant"><span class="material-symbols-outlined">skip_next</span></button>
+        <button id="repeat-btn" class="text-on-surface-variant hover:text-secondary transition-colors" title="Répéter"><span class="material-symbols-outlined" id="repeat-icon">repeat</span></button>
       </div>
       <div class="w-full flex items-center gap-4">
         <span class="text-label-sm text-on-surface-variant" id="current-time">0:00</span>
@@ -177,11 +177,18 @@ tailwind.config = {
       </div>
     </div>
     <div class="flex items-center justify-end gap-6 w-1/4">
-      <button class="text-on-surface-variant hover:text-secondary"><span class="material-symbols-outlined">playlist_play</span></button>
+      <button id="speed-btn" class="text-on-surface-variant hover:text-secondary transition-colors text-xs font-bold" title="Vitesse" style="min-width:32px">1x</button>
+      <button id="playlist-btn" class="text-on-surface-variant hover:text-secondary transition-colors" title="File de lecture"><span class="material-symbols-outlined">playlist_play</span></button>
       <div class="flex items-center gap-2 w-32" id="volume-bar">
-        <span class="material-symbols-outlined text-on-surface-variant text-[20px]">volume_up</span>
-        <div class="flex-1 h-1 bg-primary/10 rounded-full"><div class="h-full w-3/4 bg-on-surface-variant rounded-full" id="volume-fill"></div></div>
+        <button id="volume-btn" class="text-on-surface-variant hover:text-secondary transition-colors flex-shrink-0" title="Muet"><span class="material-symbols-outlined text-[20px]" id="volume-icon">volume_up</span></button>
+        <div class="flex-1 h-1 bg-primary/10 rounded-full cursor-pointer" id="volume-track"><div class="h-full w-3/4 bg-on-surface-variant rounded-full" id="volume-fill"></div></div>
       </div>
+    </div>
+
+    <!-- File de lecture (mini-panel) -->
+    <div id="sp-queue-panel" style="display:none;position:absolute;bottom:calc(100% + 8px);right:24px;width:320px;max-height:320px;overflow-y:auto;background:rgba(255,255,255,0.97);backdrop-filter:blur(20px);border-radius:16px;box-shadow:0 8px 32px rgba(0,38,27,.15);border:1px solid rgba(0,38,27,.08);z-index:100;padding:12px 0">
+      <p style="font-size:11px;font-weight:700;color:rgba(0,38,27,.4);text-transform:uppercase;letter-spacing:.07em;padding:0 16px 8px">File de lecture</p>
+      <div id="sp-queue-list"></div>
     </div>
   </div>
 </footer>

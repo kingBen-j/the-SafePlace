@@ -1,0 +1,272 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block title %}Soutenir le Ministère — The SafePlace by K{% endblock %}
+
+{% block content %}
+<main class="max-w-container-max-width mx-auto px-4 md:px-margin-desktop py-10">
+
+  <!-- Hero -->
+  <div class="bg-primary rounded-[32px] p-10 md:p-16 mb-12 relative overflow-hidden text-center">
+    <div class="absolute inset-0 opacity-10 pointer-events-none">
+      <span class="material-symbols-outlined absolute text-white" style="font-size:140px;top:-20px;left:-20px;transform:rotate(-15deg)">favorite</span>
+      <span class="material-symbols-outlined absolute text-white" style="font-size:90px;bottom:-10px;right:20px;transform:rotate(10deg)">church</span>
+    </div>
+    <div class="relative z-10">
+      <div class="w-20 h-20 rounded-full bg-white/10 backdrop-blur-md flex items-center justify-center mx-auto mb-6 border border-white/20">
+        <span class="material-symbols-outlined text-4xl text-white" style="font-variation-settings:'FILL' 1">volunteer_activism</span>
+      </div>
+      <h1 class="font-display-lg text-white text-3xl md:text-5xl mb-4">Soutenir le Ministère</h1>
+      <p class="text-white/80 text-body-lg max-w-2xl mx-auto">
+        Votre soutien permet à The SafePlace by K de continuer à partager la Parole de Dieu, produire du contenu de qualité et toucher davantage de vies.
+      </p>
+    </div>
+  </div>
+
+  <!-- Verset -->
+  <div class="text-center mb-12 px-4">
+    <p class="text-on-surface-variant italic text-lg max-w-xl mx-auto leading-relaxed">
+      « Que celui qui reçoit l'enseignement de la Parole fasse part de tous ses biens à celui qui le lui donne. »
+    </p>
+    <span class="text-sm font-bold text-secondary mt-2 block">— Galates 6:6</span>
+  </div>
+
+  <!-- Cartes Mobile Money -->
+  <section class="grid grid-cols-1 md:grid-cols-2 gap-gutter mb-14">
+
+    <!-- Wave -->
+    <div class="rounded-[28px] border border-outline-variant overflow-hidden shadow-[0_4px_24px_rgba(0,0,0,0.06)]">
+      <!-- Header Wave -->
+      <div class="p-8 flex items-center gap-5" style="background:linear-gradient(135deg,#0f5faa,#1a8fe8)">
+        <div class="w-16 h-16 rounded-2xl bg-white flex items-center justify-center flex-shrink-0 shadow-lg">
+          <!-- Logo Wave stylisé -->
+          <svg viewBox="0 0 40 40" width="40" height="40" xmlns="http://www.w3.org/2000/svg">
+            <text x="50%" y="55%" dominant-baseline="middle" text-anchor="middle"
+                  font-family="Arial Black, sans-serif" font-size="13" font-weight="900" fill="#0f5faa">Wave</text>
+          </svg>
+        </div>
+        <div>
+          <h2 class="text-white text-2xl font-extrabold" style="font-family:'Poppins',sans-serif">Wave</h2>
+          <p class="text-white/70 text-sm mt-1">Mobile Money — Rapide et sans frais</p>
+        </div>
+      </div>
+
+      <!-- Corps -->
+      <div class="p-8 bg-surface-container-lowest space-y-6">
+
+        {% if wave_number %}
+        <!-- Numéro -->
+        <div>
+          <p class="text-xs font-bold text-on-surface-variant uppercase tracking-widest mb-2">Numéro Wave</p>
+          <div class="flex items-center gap-3 bg-surface-container p-4 rounded-2xl border border-outline-variant">
+            <span class="material-symbols-outlined text-[20px]" style="color:#0f5faa">phone</span>
+            <span class="font-bold text-primary text-lg tracking-wide flex-1" id="wave-number">{{ wave_number }}</span>
+            <button onclick="copyToClipboard('wave-number', this)"
+                    class="flex items-center gap-1.5 text-xs font-bold px-3 py-1.5 rounded-full transition-all"
+                    style="background:rgba(15,95,170,0.1);color:#0f5faa">
+              <span class="material-symbols-outlined text-[15px]">content_copy</span>Copier
+            </button>
+          </div>
+        </div>
+
+        <!-- Nom du bénéficiaire -->
+        <div>
+          <p class="text-xs font-bold text-on-surface-variant uppercase tracking-widest mb-2">Bénéficiaire</p>
+          <div class="flex items-center gap-3 bg-surface-container p-4 rounded-2xl border border-outline-variant">
+            <span class="material-symbols-outlined text-[20px]" style="color:#0f5faa">person</span>
+            <span class="font-semibold text-primary">{{ wave_name }}</span>
+          </div>
+        </div>
+
+        <!-- QR Code Wave -->
+        <div class="text-center" id="wave-qr-block">
+          <p class="text-xs font-bold text-on-surface-variant uppercase tracking-widest mb-3">Scanner pour payer</p>
+          <div class="inline-flex flex-col items-center gap-3 p-4 rounded-3xl border border-outline-variant bg-white shadow-sm">
+            <img src="{% static 'img/qr_wave.png' %}"
+                 alt="QR Code Wave"
+                 style="width:200px;height:200px;object-fit:contain;display:block;border-radius:12px"
+                 onerror="document.getElementById('wave-qr-block').style.display='none'">
+            <span class="text-xs font-bold text-gray-500">Scannez avec l'app Wave</span>
+          </div>
+        </div>
+
+        {% else %}
+        <div class="text-center py-6 text-on-surface-variant">
+          <span class="material-symbols-outlined text-4xl mb-2 block opacity-30">info</span>
+          <p class="text-sm">Numéro Wave bientôt disponible.</p>
+        </div>
+        {% endif %}
+
+        <!-- Comment faire -->
+        <div class="rounded-2xl p-5" style="background:rgba(15,95,170,0.06);border:1px solid rgba(15,95,170,0.15)">
+          <p class="text-xs font-bold uppercase tracking-widest mb-3" style="color:#0f5faa">Comment envoyer</p>
+          <ol class="space-y-2">
+            {% for step in wave_steps %}
+            <li class="flex items-start gap-3 text-sm text-on-surface-variant">
+              <span class="w-5 h-5 rounded-full flex items-center justify-center text-white text-xs font-bold flex-shrink-0 mt-0.5" style="background:#0f5faa">{{ forloop.counter }}</span>
+              {{ step }}
+            </li>
+            {% endfor %}
+          </ol>
+        </div>
+
+        {% if don_message %}
+        <div class="text-xs text-on-surface-variant flex items-center gap-2">
+          <span class="material-symbols-outlined text-[14px]">label</span>
+          Précisez <strong class="text-primary mx-1">« {{ don_message }} »</strong> dans le motif du transfert.
+        </div>
+        {% endif %}
+      </div>
+    </div>
+
+    <!-- Orange Money -->
+    <div class="rounded-[28px] border border-outline-variant overflow-hidden shadow-[0_4px_24px_rgba(0,0,0,0.06)]">
+      <!-- Header Orange -->
+      <div class="p-8 flex items-center gap-5" style="background:linear-gradient(135deg,#cc4e00,#ff7700)">
+        <div class="w-16 h-16 rounded-2xl bg-white flex items-center justify-center flex-shrink-0 shadow-lg">
+          <svg viewBox="0 0 40 40" width="40" height="40" xmlns="http://www.w3.org/2000/svg">
+            <circle cx="20" cy="20" r="16" fill="#ff7700"/>
+            <text x="50%" y="56%" dominant-baseline="middle" text-anchor="middle"
+                  font-family="Arial Black, sans-serif" font-size="9" font-weight="900" fill="white">OM</text>
+          </svg>
+        </div>
+        <div>
+          <h2 class="text-white text-2xl font-extrabold" style="font-family:'Poppins',sans-serif">Orange Money</h2>
+          <p class="text-white/70 text-sm mt-1">Mobile Money — Disponible partout</p>
+        </div>
+      </div>
+
+      <!-- Corps -->
+      <div class="p-8 bg-surface-container-lowest space-y-6">
+
+        {% if orange_number %}
+        <!-- Numéro -->
+        <div>
+          <p class="text-xs font-bold text-on-surface-variant uppercase tracking-widest mb-2">Numéro Orange Money</p>
+          <div class="flex items-center gap-3 bg-surface-container p-4 rounded-2xl border border-outline-variant">
+            <span class="material-symbols-outlined text-[20px]" style="color:#ff7700">phone</span>
+            <span class="font-bold text-primary text-lg tracking-wide flex-1" id="orange-number">{{ orange_number }}</span>
+            <button onclick="copyToClipboard('orange-number', this)"
+                    class="flex items-center gap-1.5 text-xs font-bold px-3 py-1.5 rounded-full transition-all"
+                    style="background:rgba(255,119,0,0.1);color:#ff7700">
+              <span class="material-symbols-outlined text-[15px]">content_copy</span>Copier
+            </button>
+          </div>
+        </div>
+
+        <!-- Nom -->
+        <div>
+          <p class="text-xs font-bold text-on-surface-variant uppercase tracking-widest mb-2">Bénéficiaire</p>
+          <div class="flex items-center gap-3 bg-surface-container p-4 rounded-2xl border border-outline-variant">
+            <span class="material-symbols-outlined text-[20px]" style="color:#ff7700">person</span>
+            <span class="font-semibold text-primary">{{ orange_name }}</span>
+          </div>
+        </div>
+
+        <!-- QR Code Orange Money -->
+        <div class="text-center" id="orange-qr-block">
+          <p class="text-xs font-bold text-on-surface-variant uppercase tracking-widest mb-3">Scanner pour payer</p>
+          <div class="inline-flex flex-col items-center gap-3 p-4 rounded-3xl border border-outline-variant bg-white shadow-sm">
+            <img src="{% static 'img/qr_orange.png' %}"
+                 alt="QR Code Orange Money"
+                 style="width:200px;height:200px;object-fit:contain;display:block;border-radius:12px"
+                 onerror="document.getElementById('orange-qr-block').style.display='none'">
+            <span class="text-xs font-bold text-gray-500">Scannez avec l'app Orange Money</span>
+          </div>
+        </div>
+
+        {% else %}
+        <div class="text-center py-6 text-on-surface-variant">
+          <span class="material-symbols-outlined text-4xl mb-2 block opacity-30">info</span>
+          <p class="text-sm">Numéro Orange Money bientôt disponible.</p>
+        </div>
+        {% endif %}
+
+        <!-- Comment faire -->
+        <div class="rounded-2xl p-5" style="background:rgba(255,119,0,0.06);border:1px solid rgba(255,119,0,0.15)">
+          <p class="text-xs font-bold uppercase tracking-widest mb-3" style="color:#ff7700">Comment envoyer</p>
+          <ol class="space-y-2">
+            {% for step in orange_steps %}
+            <li class="flex items-start gap-3 text-sm text-on-surface-variant">
+              <span class="w-5 h-5 rounded-full flex items-center justify-center text-white text-xs font-bold flex-shrink-0 mt-0.5" style="background:#ff7700">{{ forloop.counter }}</span>
+              {{ step }}
+            </li>
+            {% endfor %}
+          </ol>
+        </div>
+
+        {% if don_message %}
+        <div class="text-xs text-on-surface-variant flex items-center gap-2">
+          <span class="material-symbols-outlined text-[14px]">label</span>
+          Précisez <strong class="text-primary mx-1">« {{ don_message }} »</strong> dans le motif du transfert.
+        </div>
+        {% endif %}
+      </div>
+    </div>
+
+  </section>
+
+  <!-- Pourquoi soutenir -->
+  <section class="mb-14">
+    <h2 class="text-primary text-2xl font-extrabold text-center mb-8" style="font-family:'Poppins',sans-serif">Pourquoi Soutenir ?</h2>
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+
+      <div class="bg-surface-container-low rounded-[20px] p-6 border border-outline-variant text-center">
+        <div class="w-12 h-12 rounded-full bg-secondary-container flex items-center justify-center mx-auto mb-4">
+          <span class="material-symbols-outlined text-secondary" style="font-variation-settings:'FILL' 1">headphones</span>
+        </div>
+        <h3 class="font-bold text-primary mb-2" style="font-family:'Poppins',sans-serif">Podcasts de qualité</h3>
+        <p class="text-sm text-on-surface-variant leading-relaxed">Financer l'équipement et la production de nouveaux épisodes inspirants.</p>
+      </div>
+
+      <div class="bg-surface-container-low rounded-[20px] p-6 border border-outline-variant text-center">
+        <div class="w-12 h-12 rounded-full bg-secondary-container flex items-center justify-center mx-auto mb-4">
+          <span class="material-symbols-outlined text-secondary" style="font-variation-settings:'FILL' 1">sensors</span>
+        </div>
+        <h3 class="font-bold text-primary mb-2" style="font-family:'Poppins',sans-serif">Émissions Live</h3>
+        <p class="text-sm text-on-surface-variant leading-relaxed">Maintenir les livestreams gratuits et accessibles à tous, partout dans le monde.</p>
+      </div>
+
+      <div class="bg-surface-container-low rounded-[20px] p-6 border border-outline-variant text-center">
+        <div class="w-12 h-12 rounded-full bg-secondary-container flex items-center justify-center mx-auto mb-4">
+          <span class="material-symbols-outlined text-secondary" style="font-variation-settings:'FILL' 1">public</span>
+        </div>
+        <h3 class="font-bold text-primary mb-2" style="font-family:'Poppins',sans-serif">Portée Mondiale</h3>
+        <p class="text-sm text-on-surface-variant leading-relaxed">Élargir la diffusion du message chrétien au-delà des frontières.</p>
+      </div>
+
+    </div>
+  </section>
+
+  <!-- Message de remerciement -->
+  <div class="text-center bg-surface-container-low rounded-[24px] border border-outline-variant p-10 mb-8">
+    <span class="material-symbols-outlined text-5xl mb-4 block" style="color:#9ff700;font-variation-settings:'FILL' 1">favorite</span>
+    <h2 class="text-primary text-xl font-extrabold mb-3" style="font-family:'Poppins',sans-serif">Que Dieu vous bénisse !</h2>
+    <p class="text-on-surface-variant max-w-lg mx-auto leading-relaxed text-sm">
+      Chaque don, quelle qu'en soit la taille, est une semence pour le Royaume de Dieu. Merci du fond du cœur pour votre générosité et votre confiance.
+    </p>
+    <a href="{% url 'contact' %}" class="mt-6 inline-flex items-center gap-2 bg-primary text-on-primary font-bold px-6 py-3 rounded-full hover:opacity-90 transition-all text-sm">
+      <span class="material-symbols-outlined text-[16px]">mail</span>Nous contacter
+    </a>
+  </div>
+
+</main>
+
+<script>
+function copyToClipboard(elementId, btn) {
+  const text = document.getElementById(elementId).textContent.trim();
+  navigator.clipboard.writeText(text).then(() => {
+    const original = btn.innerHTML;
+    btn.innerHTML = '<span class="material-symbols-outlined text-[15px]">check</span>Copié !';
+    btn.style.background = 'rgba(65,105,0,0.15)';
+    btn.style.color = '#416900';
+    setTimeout(() => {
+      btn.innerHTML = original;
+      btn.style.background = '';
+      btn.style.color = '';
+    }, 2000);
+  }).catch(() => {
+    alert('Numéro : ' + text);
+  });
+}
+</script>
+{% endblock %}

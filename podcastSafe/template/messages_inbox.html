@@ -1,0 +1,546 @@
+{% extends 'base.html' %}
+{% block title %}Boîte de réception — The SafePlace by K{% endblock %}
+
+{% block extra_css %}
+<style>
+:root {
+  --bg: #040906;
+  --accent: #9ff700;
+  --card: rgba(12,22,14,.9);
+  --border: rgba(159,247,0,.1);
+  --muted: #4d7050;
+}
+body { background: var(--bg); color: #e8f5e0; }
+
+.inbox-wrap {
+  max-width: 860px;
+  margin: 0 auto;
+  padding: 28px 16px 80px;
+}
+
+/* ── HEADER ── */
+.inbox-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-bottom: 24px;
+}
+.inbox-title {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.inbox-title h1 {
+  font-size: 1.4rem;
+  font-weight: 900;
+  font-family: 'Montserrat', sans-serif;
+  color: var(--accent);
+}
+.unread-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 24px;
+  height: 24px;
+  padding: 0 7px;
+  border-radius: 99px;
+  background: #ff4455;
+  color: #fff;
+  font-size: .72rem;
+  font-weight: 900;
+}
+
+.inbox-actions { display: flex; gap: 8px; flex-wrap: wrap; }
+.btn-ghost {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 9px 16px;
+  border-radius: 99px;
+  border: 1px solid rgba(255,255,255,.1);
+  background: rgba(255,255,255,.05);
+  color: #e8f5e0;
+  font-size: .8rem;
+  font-weight: 700;
+  cursor: pointer;
+  text-decoration: none;
+  font-family: inherit;
+  transition: background .2s;
+}
+.btn-ghost:hover { background: rgba(255,255,255,.12); }
+.btn-accent {
+  background: rgba(159,247,0,.1);
+  border-color: rgba(159,247,0,.25);
+  color: var(--accent);
+}
+.btn-accent:hover { background: rgba(159,247,0,.18); }
+
+/* ── FILTRES ── */
+.filters {
+  display: flex;
+  gap: 6px;
+  margin-bottom: 18px;
+  flex-wrap: wrap;
+}
+.filter-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 18px;
+  border-radius: 99px;
+  border: 1px solid rgba(255,255,255,.08);
+  background: transparent;
+  color: var(--muted);
+  font-size: .8rem;
+  font-weight: 700;
+  cursor: pointer;
+  font-family: inherit;
+  text-decoration: none;
+  transition: all .2s;
+}
+.filter-btn.active {
+  background: var(--card);
+  border-color: rgba(159,247,0,.25);
+  color: var(--accent);
+}
+.filter-btn:hover:not(.active) { color: #e8f5e0; border-color: rgba(255,255,255,.2); }
+.filter-count {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 18px;
+  height: 18px;
+  padding: 0 5px;
+  border-radius: 99px;
+  background: rgba(255,255,255,.1);
+  font-size: .67rem;
+  font-weight: 900;
+  color: inherit;
+}
+.filter-btn.active .filter-count { background: rgba(159,247,0,.2); }
+
+/* ── LISTE MESSAGES ── */
+.msg-list { display: flex; flex-direction: column; gap: 10px; }
+
+.msg-card {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 18px;
+  overflow: hidden;
+  transition: border-color .2s, box-shadow .2s;
+}
+.msg-card.unread {
+  border-color: rgba(159,247,0,.25);
+  box-shadow: 0 0 0 1px rgba(159,247,0,.08) inset;
+}
+.msg-card.unread .msg-header { background: rgba(159,247,0,.04); }
+
+/* Header cliquable */
+.msg-header {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 16px 18px;
+  cursor: pointer;
+  user-select: none;
+  transition: background .15s;
+}
+.msg-header:hover { background: rgba(255,255,255,.03); }
+
+.msg-avatar {
+  width: 42px;
+  height: 42px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  font-size: 1.1rem;
+  font-weight: 900;
+  background: rgba(159,247,0,.12);
+  color: var(--accent);
+  border: 1.5px solid rgba(159,247,0,.2);
+}
+.msg-card.unread .msg-avatar { background: rgba(159,247,0,.2); }
+
+.msg-meta { flex: 1; min-width: 0; }
+.msg-from {
+  font-weight: 700;
+  font-size: .9rem;
+  color: #e8f5e0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.msg-subject {
+  font-size: .8rem;
+  color: var(--muted);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  margin-top: 2px;
+}
+.msg-card.unread .msg-subject { color: rgba(159,247,0,.7); font-weight: 600; }
+
+.msg-right { display: flex; align-items: center; gap: 10px; flex-shrink: 0; }
+.msg-date { font-size: .73rem; color: var(--muted); white-space: nowrap; }
+.msg-dot {
+  width: 8px; height: 8px;
+  border-radius: 50%;
+  background: var(--accent);
+  flex-shrink: 0;
+}
+.msg-card.read .msg-dot { display: none; }
+
+.msg-priority {
+  font-size: .67rem;
+  font-weight: 800;
+  padding: 2px 8px;
+  border-radius: 99px;
+  text-transform: uppercase;
+  letter-spacing: .04em;
+}
+.msg-priority.high   { background: rgba(255,68,85,.15);  color: #ff4455; }
+.msg-priority.normal { background: rgba(255,255,255,.07); color: var(--muted); }
+.msg-priority.low    { background: rgba(255,255,255,.04); color: rgba(255,255,255,.25); }
+
+.chevron {
+  font-size: 20px;
+  color: var(--muted);
+  transition: transform .2s;
+  flex-shrink: 0;
+}
+.msg-card.open .chevron { transform: rotate(180deg); }
+
+/* Corps du message */
+.msg-body {
+  display: none;
+  border-top: 1px solid var(--border);
+}
+.msg-card.open .msg-body { display: block; }
+
+.msg-body-inner { padding: 20px 20px 16px; }
+.msg-email-bar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px;
+  background: rgba(255,255,255,.04);
+  border: 1px solid rgba(255,255,255,.07);
+  border-radius: 10px;
+  margin-bottom: 16px;
+  font-size: .8rem;
+  color: var(--muted);
+}
+.msg-email-bar .email { color: var(--accent); font-weight: 700; }
+
+.msg-text {
+  font-size: .88rem;
+  line-height: 1.7;
+  color: #c8e6c0;
+  white-space: pre-wrap;
+  word-break: break-word;
+  padding: 16px;
+  background: rgba(255,255,255,.03);
+  border-radius: 12px;
+  border: 1px solid rgba(255,255,255,.06);
+}
+
+.msg-body-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 20px 16px;
+  flex-wrap: wrap;
+}
+.act-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 16px;
+  border-radius: 99px;
+  border: none;
+  font-size: .78rem;
+  font-weight: 700;
+  cursor: pointer;
+  font-family: inherit;
+  transition: all .18s;
+}
+.act-read   { background: rgba(159,247,0,.1); color: var(--accent); border: 1px solid rgba(159,247,0,.2); }
+.act-read:hover { background: rgba(159,247,0,.2); }
+.act-reply  { background: rgba(56,189,248,.1); color: #38bdf8; border: 1px solid rgba(56,189,248,.2); }
+.act-reply:hover { background: rgba(56,189,248,.18); }
+.act-delete { background: rgba(255,68,85,.08); color: #ff4455; border: 1px solid rgba(255,68,85,.18); margin-left: auto; }
+.act-delete:hover { background: rgba(255,68,85,.18); }
+
+/* ── VIDE ── */
+.inbox-empty {
+  text-align: center;
+  padding: 80px 20px;
+  color: var(--muted);
+}
+.inbox-empty .ms { font-size: 64px; opacity: .2; display: block; margin-bottom: 16px; }
+
+/* ── TOAST ── */
+#toast {
+  position: fixed;
+  bottom: 28px;
+  left: 50%;
+  transform: translateX(-50%) translateY(20px);
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 12px 20px;
+  font-size: .84rem;
+  font-weight: 700;
+  color: var(--accent);
+  box-shadow: 0 8px 32px rgba(0,0,0,.4);
+  opacity: 0;
+  transition: opacity .25s, transform .25s;
+  pointer-events: none;
+  z-index: 999;
+  white-space: nowrap;
+}
+#toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="inbox-wrap">
+
+  <!-- Header -->
+  <div class="inbox-header">
+    <div class="inbox-title">
+      <a href="{% url 'studio_live' %}" class="btn-ghost" style="padding:8px 12px">
+        <span class="material-symbols-outlined" style="font-size:17px">arrow_back</span>
+      </a>
+      <h1>Boîte de réception</h1>
+      {% if unread > 0 %}
+      <span class="unread-badge">{{ unread }}</span>
+      {% endif %}
+    </div>
+    <div class="inbox-actions">
+      {% if unread > 0 %}
+      <button class="btn-ghost btn-accent" onclick="markAllRead()">
+        <span class="material-symbols-outlined" style="font-size:16px">done_all</span>
+        Tout marquer lu
+      </button>
+      {% endif %}
+      <a href="{% url 'studio_live' %}" class="btn-ghost">
+        <span class="material-symbols-outlined" style="font-size:16px">videocam</span>
+        Studio
+      </a>
+      <a href="{% url 'publish_episode' %}" class="btn-ghost">
+        <span class="material-symbols-outlined" style="font-size:16px">upload_file</span>
+        Publier
+      </a>
+    </div>
+  </div>
+
+  <!-- Filtres -->
+  <div class="filters">
+    <a href="?f=all"    class="filter-btn {% if active_filter == 'all' %}active{% endif %}">
+      <span class="material-symbols-outlined" style="font-size:15px">mail</span>
+      Tous <span class="filter-count">{{ total }}</span>
+    </a>
+    <a href="?f=unread" class="filter-btn {% if active_filter == 'unread' %}active{% endif %}">
+      <span class="material-symbols-outlined" style="font-size:15px">mark_email_unread</span>
+      Non lus <span class="filter-count">{{ unread }}</span>
+    </a>
+    <a href="?f=read"   class="filter-btn {% if active_filter == 'read' %}active{% endif %}">
+      <span class="material-symbols-outlined" style="font-size:15px">mark_email_read</span>
+      Lus <span class="filter-count">{{ read }}</span>
+    </a>
+  </div>
+
+  <!-- Liste -->
+  {% if messages %}
+  <div class="msg-list" id="msg-list">
+    {% for msg in messages %}
+    <div class="msg-card {% if msg.is_read %}read{% else %}unread{% endif %}"
+         id="card-{{ msg.id }}"
+         data-id="{{ msg.id }}"
+         data-read="{{ msg.is_read|yesno:'true,false' }}">
+
+      <!-- Entête cliquable -->
+      <div class="msg-header" onclick="toggleCard({{ msg.id }})">
+        <!-- Avatar initiales -->
+        <div class="msg-avatar">{{ msg.name|first|upper }}</div>
+
+        <!-- Infos -->
+        <div class="msg-meta">
+          <div class="msg-from">{{ msg.name }}</div>
+          <div class="msg-subject">{{ msg.subject }}</div>
+        </div>
+
+        <!-- Droite -->
+        <div class="msg-right">
+          {% if msg.priority == 'high' %}
+          <span class="msg-priority high">Urgent</span>
+          {% elif msg.priority == 'normal' %}
+          <span class="msg-priority normal">Normal</span>
+          {% else %}
+          <span class="msg-priority low">Bas</span>
+          {% endif %}
+          <span class="msg-date">{{ msg.created_at|date:"d/m/Y" }}</span>
+          <span class="msg-dot"></span>
+          <span class="material-symbols-outlined chevron">expand_more</span>
+        </div>
+      </div>
+
+      <!-- Corps (masqué par défaut) -->
+      <div class="msg-body">
+        <div class="msg-body-inner">
+          <div class="msg-email-bar">
+            <span class="material-symbols-outlined" style="font-size:15px">alternate_email</span>
+            <span class="email">{{ msg.email }}</span>
+            <span style="margin-left:auto;font-size:.7rem">{{ msg.created_at|date:"d F Y à H:i" }}</span>
+          </div>
+          <div class="msg-text">{{ msg.message }}</div>
+        </div>
+        <div class="msg-body-actions">
+          <button class="act-btn act-read" id="read-btn-{{ msg.id }}" onclick="toggleRead({{ msg.id }}, event)">
+            <span class="material-symbols-outlined" style="font-size:15px" id="read-icon-{{ msg.id }}">{% if msg.is_read %}mark_email_unread{% else %}mark_email_read{% endif %}</span>
+            <span id="read-label-{{ msg.id }}">{% if msg.is_read %}Marquer non lu{% else %}Marquer lu{% endif %}</span>
+          </button>
+          <a href="mailto:{{ msg.email }}?subject=Re: {{ msg.subject }}" class="act-btn act-reply">
+            <span class="material-symbols-outlined" style="font-size:15px">reply</span>
+            Répondre par email
+          </a>
+          <button class="act-btn act-delete" onclick="deleteMsg({{ msg.id }}, event)">
+            <span class="material-symbols-outlined" style="font-size:15px">delete</span>
+            Supprimer
+          </button>
+        </div>
+      </div>
+
+    </div>
+    {% endfor %}
+  </div>
+
+  {% else %}
+  <div class="inbox-empty">
+    <span class="material-symbols-outlined ms">inbox</span>
+    <p style="font-weight:700;font-size:1rem;color:#e8f5e0;margin-bottom:6px">Aucun message</p>
+    <p style="font-size:.85rem">
+      {% if active_filter == 'unread' %}Vous avez tout lu !
+      {% elif active_filter == 'read' %}Aucun message lu.
+      {% else %}Aucun message de contact reçu.{% endif %}
+    </p>
+  </div>
+  {% endif %}
+
+</div>
+
+<!-- Toast -->
+<div id="toast"></div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+var CSRF = (document.cookie.match(/csrftoken=([^;]+)/) || [])[1] || '';
+
+/* ── Ouvrir/fermer un message ── */
+function toggleCard(id) {
+  var card = document.getElementById('card-' + id);
+  var isOpen = card.classList.contains('open');
+  // Fermer les autres
+  document.querySelectorAll('.msg-card.open').forEach(function(c) { c.classList.remove('open'); });
+  if (!isOpen) {
+    card.classList.add('open');
+    // Marquer auto comme lu à l'ouverture si non lu
+    if (card.dataset.read === 'false') {
+      doToggleRead(id, true);
+    }
+  }
+}
+
+/* ── Marquer lu/non lu ── */
+function toggleRead(id, ev) {
+  ev.stopPropagation();
+  var card = document.getElementById('card-' + id);
+  var isRead = card.dataset.read === 'true';
+  doToggleRead(id, !isRead);
+}
+
+function doToggleRead(id, markAsRead) {
+  fetch('/messages/' + id + '/toggle-read/', {
+    method: 'POST',
+    headers: { 'X-CSRFToken': CSRF },
+  }).then(function(r) { return r.json(); }).then(function(d) {
+    if (!d.success) return;
+    var card  = document.getElementById('card-' + id);
+    var icon  = document.getElementById('read-icon-' + id);
+    var label = document.getElementById('read-label-' + id);
+    card.dataset.read = d.is_read ? 'true' : 'false';
+    card.classList.toggle('unread', !d.is_read);
+    card.classList.toggle('read',    d.is_read);
+    if (icon)  icon.textContent  = d.is_read ? 'mark_email_unread' : 'mark_email_read';
+    if (label) label.textContent = d.is_read ? 'Marquer non lu' : 'Marquer lu';
+    updateUnreadCount();
+    showToast(d.is_read ? 'Message marqué comme lu' : 'Message marqué comme non lu');
+  }).catch(function() { showToast('Erreur réseau', true); });
+}
+
+/* ── Supprimer ── */
+function deleteMsg(id, ev) {
+  ev.stopPropagation();
+  if (!confirm('Supprimer ce message définitivement ?')) return;
+  fetch('/messages/' + id + '/delete/', {
+    method: 'POST',
+    headers: { 'X-CSRFToken': CSRF },
+  }).then(function(r) { return r.json(); }).then(function(d) {
+    if (!d.success) return;
+    var card = document.getElementById('card-' + id);
+    card.style.transition = 'opacity .3s, transform .3s';
+    card.style.opacity = '0';
+    card.style.transform = 'translateX(-20px)';
+    setTimeout(function() { card.remove(); updateUnreadCount(); }, 300);
+    showToast('Message supprimé');
+  }).catch(function() { showToast('Erreur réseau', true); });
+}
+
+/* ── Marquer tout comme lu ── */
+function markAllRead() {
+  fetch('/messages/mark-all-read/', {
+    method: 'POST',
+    headers: { 'X-CSRFToken': CSRF },
+  }).then(function(r) { return r.json(); }).then(function(d) {
+    if (!d.success) return;
+    document.querySelectorAll('.msg-card.unread').forEach(function(card) {
+      var id = card.dataset.id;
+      card.dataset.read = 'true';
+      card.classList.remove('unread');
+      card.classList.add('read');
+      var icon  = document.getElementById('read-icon-' + id);
+      var label = document.getElementById('read-label-' + id);
+      if (icon)  icon.textContent  = 'mark_email_unread';
+      if (label) label.textContent = 'Marquer non lu';
+    });
+    updateUnreadCount();
+    showToast('Tous les messages sont marqués comme lus');
+    // Masquer le bouton "Tout marquer lu"
+    document.querySelectorAll('.btn-accent').forEach(function(b) { b.style.display = 'none'; });
+  }).catch(function() { showToast('Erreur réseau', true); });
+}
+
+/* ── Compteur non lus ── */
+function updateUnreadCount() {
+  var count = document.querySelectorAll('.msg-card.unread').length;
+  var badge = document.querySelector('.unread-badge');
+  if (badge) { badge.textContent = count; badge.style.display = count > 0 ? '' : 'none'; }
+}
+
+/* ── Toast ── */
+function showToast(msg, isErr) {
+  var t = document.getElementById('toast');
+  t.textContent = msg;
+  t.style.color = isErr ? '#ff4455' : '#9ff700';
+  t.style.borderColor = isErr ? 'rgba(255,68,85,.2)' : 'rgba(159,247,0,.15)';
+  t.classList.add('show');
+  setTimeout(function() { t.classList.remove('show'); }, 2500);
+}
+</script>
+{% endblock %}
